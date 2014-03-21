@@ -1,0 +1,167 @@
+/** HELPER
+ * Refer to the Color Picker:
+ * http://www.w3schools.com/tags/ref_colorpicker.asp
+ * A powerful Photoshop-like CSS gradient editor:
+ * http://www.colorzilla.com/gradient-editor/
+ * http://www.css3factory.com/linear-gradients/
+ */
+
+body {
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+}
+
+h1 { text-shadow: 3px 3px 8px #aaa; }
+
+a {
+	text-decoration: none;
+	color: #79f;
+}
+
+a:hover { color: maroon; }
+
+code {
+	font-family: Courier, monospace, serif;
+	color: maroon;
+}
+
+blockquote {
+	margin: 0;
+	padding-left: 15px;
+	border-left: 4px solid #ccc;
+	font-style: italic;
+	color: #888;
+}
+
+button {
+	margin: 0;
+	border: 3px groove #888;
+	border-radius: 5px;
+	background: linear-gradient(#888, #000);
+	font-weight: bold;
+	color: white;
+}
+
+button:hover {
+	box-shadow: 0 0 10px #ff5;
+}
+
+button:active {
+	background: linear-gradient(#000, #888);
+}
+
+#new:before {
+	content: url(../img/16x16/new.png);
+}
+
+#open:before {
+	content: url(../img/16x16/open.png);
+}
+
+#view:before {
+	content: url(../img/16x16/view.png);
+}
+
+#save:before {
+	content: url(../img/16x16/save.png);
+}
+
+#run:before {
+	content: url(../img/16x16/run.png);
+}
+
+header {
+	position: absolute; top: 4px;
+	right: 35px;
+	color: #ffc;
+	font-family:sans-serif;
+	font-size:28px;
+	letter-spacing:5px;
+/*	text-shadow:5px 3px 10px #000;*/
+}
+
+.CodeMirror {
+	margin: 0;
+	padding: 0;
+}
+
+.CodeMirror-scroll {
+	height: auto;
+	overflow-y: hidden;
+	overflow-x: auto;
+}
+
+.cm-trailingspace {
+	background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAQAAAACCAYAAAB/qH1jAAAABmJLR0QA/wD/AP+gvaeTAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAB3RJTUUH3QUXCToH00Y1UgAAACFJREFUCNdjPMDBUc/AwNDAAAFMTAwMDA0OP34wQgX/AQBYgwYEx4f9lQAAAABJRU5ErkJggg==);
+	background-position: bottom left;
+	background-repeat: repeat-x;
+}
+/*
+.CodeMirror-selected  { background-color: blue !important; }
+.CodeMirror-selectedtext { color: white; }
+*/
+
+/* CodeMirror editor z-index:
+ * 0 background
+ * 1 text
+ * 2 gutter
+ * 3 line num
+ * 4... free
+ */
+#editor {
+	position: absolute;
+	top: 44px;
+	bottom: 27px;
+	left: 0;
+	right: 0;
+	background: #262626;
+}
+
+#output {
+	font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+	padding: 25px;
+	position: absolute;
+	top: 44px;
+	bottom: 27px;
+	left: 0;
+	right: 0;
+	z-index: 5;	/* above editor layers z = 0..3 */
+	background: #fff;
+	overflow: scroll;
+	display: none;
+/*	visibility: hidden; hidden on start */
+}
+
+#output pre {
+	font-family: "Courier", mono;
+	font-size: 13px;
+	white-space: pre-wrap;
+}
+
+footer {
+	font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+	font-size: 13px;
+	white-space: nowrap;
+	position: absolute;
+	bottom: 0;
+	background: maroon;
+	color: #ffc;
+	padding-top: 7px;
+	height: 21px;
+	left: 0;
+	right: 0;
+	text-align: center;
+}
+
+footer label {
+/*  font-weight: bold; */
+	color: #ccc;
+}
+
+.buttons {
+	padding: 7px;
+	height: 30px;
+	background: maroon;
+/*	background: black;*/
+}

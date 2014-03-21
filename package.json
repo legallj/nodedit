@@ -1,0 +1,25 @@
+{
+	"name": "nodEdit",
+	"version": "0.1.11",
+	"description": "Minimal IDE dedicated to single page application (SPA) development under NodeJS with WebKit.",
+	"keywords": ["editor", "IDE", "node", "webkit"],
+	"version": "0.1.1",
+	"main": "views/main.html",
+	"no-edit-menu": true,
+	"chromium-args": "--child-clean-exit",
+	"single-instance": true,
+	"window": {
+		"width": 1024,
+		"min_width": 640,
+		"height": 768,
+		"min_height": 480,
+		"show": true,
+		"title": "nodEdit",
+		"toolbar": false
+		},
+	"maintainers":[ {
+	   "name": "Jean-Yves Le Gall",
+	   "email": "legallj@mac.com",
+	   "web": "http://legalljnc.dyndns.org"
+	}]
+}

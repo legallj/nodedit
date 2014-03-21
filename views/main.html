@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>nodEdit - Code Editor</title>
+
+<script src="../js/jquery-2.0.3.min.js"></script>
+<script src="../js/editor.js"></script>
+
+<script src="../cm/lib/codemirror.js"></script>
+<script src="../cm/mode/xml/xml.js"></script>
+<script src="../cm/mode/javascript/javascript.js"></script>
+<script src="../cm/mode/htmlmixed/htmlmixed.js"></script>
+<script src="../cm/mode/css/css.js"></script>
+<script src="../cm/mode/markdown/markdown.js"></script>
+<script src="../cm/mode/shell/shell.js"></script>
+<script src="../cm/addon/search/searchcursor.js"></script>
+<script src="../cm/addon/search/search.js"></script>
+<script src="../cm/addon/selection/mark-selection.js"></script>
+
+<script src="../cm/addon/selection/active-line.js"></script>
+<script src="../cm/addon/edit/closebrackets.js"></script>
+<script src="../cm/addon/edit/matchbrackets.js"></script>
+<script src="../cm/addon/edit/trailingspace.js"></script>
+
+<script src="../cm/linter/jshint.js"></script>
+<script src="../cm/linter/jsonlint.js"></script>
+<script src="../cm/linter/csslint.js"></script>
+
+<script src="../cm/addon/lint/lint.js"></script>
+<script src="../cm/addon/lint/javascript-lint.js"></script>
+<script src="../cm/addon/lint/json-lint.js"></script>
+<script src="../cm/addon/lint/css-lint.js"></script>
+
+<script src="cm/addon/hint/show-hint.js"></script>
+<script src="cm/addon/hint/anyword-hint.js"></script>
+
+<link rel="stylesheet" href="../css/style.css">
+<link rel="stylesheet" href="../cm/lib/codemirror.css">
+<link rel="stylesheet" href="../cm/theme/monokai.css">
+<link rel="stylesheet" href="../cm/theme/solarized.css">
+<link rel="stylesheet" href="../cm/addon/lint/lint.css">
+<link rel="stylesheet" href="../cm/addon/hint/show-hint.css">
+
+</head>
+<body>
+<header>&mdash;&nbsp;nodEdit.</header>
+<div class="buttons">
+	<button id="new">New</button>
+	<button id="open">Open</button>
+	<button id="save">Save</button>
+	<button id="run">Run</button>
+	<button id="view">View</button>
+</div>
+
+<!-- PLACE HOLDER -->
+<div id="editor"></div>
+
+<!-- FRONT PAGE -->
+<div id="output">
+<h1>nodEdit &mdash; Minimal IDE</h1>
+
+<p>2014-03-20</p>
+
+<blockquote>Minimal IDE dedicated to single page application (SPA) development under NodeJS with WebKit. Implement the read - execute - print - loop (REPL) paradigme with HTML5, CSS3, Javascript and Markdown files.</blockquote>
+
+<h2>CodeMirror-3.22</h2>
+
+<p>Editor fails to resize correctly with <code>CodeMirror-2</code> then upgrade to <code>CodeMirror-3</code> &rarr; <strong>Ok!</strong></p>
+
+<h2>Built in keyboard commands</h2>
+
+<p>Extract from <a href="https://github.com/marijnh/CodeMirror/blob/1cbf1f64001b36dc7115f6a36c0f919f59c434fa/lib/codemirror.js#L2880">Source code</a></p>
+
+<ul>
+<li>&#8220;Cmd-C&#8221;: &#8220;Copy&#8221;,</li>
+<li>&#8220;Cmd-X&#8221;: &#8220;Cut&#8221;,</li>
+<li>&#8220;Cmd-V&#8221;: &#8220;Paste&#8221;,</li>
+<li>&#8220;Cmd-A&#8221;: &#8220;selectAll&#8221;,</li>
+<li>&#8220;Cmd-D&#8221;: &#8220;deleteLine&#8221;,</li>
+<li>&#8220;Cmd-Z&#8221;: &#8220;Undo&#8221;,</li>
+<li>&#8220;Shift-Cmd-Z&#8221;: &#8220;Redo&#8221;,</li>
+<li>&#8220;Cmd-Y&#8221;: &#8220;Redo&#8221;, (yank)</li>
+<li>&#8220;Ctrl-Space&#8221;: &#8220;autocomplete&#8221;, (agnostic)</li>
+</ul>
+
+<p>Move cursor:</p>
+
+<ul>
+<li>&#8220;Cmd-Up&#8221;: &#8220;goDocStart&#8221;,</li>
+<li>&#8220;Cmd-End&#8221;: &#8220;goDocEnd&#8221;,</li>
+<li>&#8220;Cmd-Down&#8221;: &#8220;goDocEnd&#8221;,</li>
+<li>&#8220;Alt-Left&#8221;: &#8220;goWordLeft&#8221;,</li>
+<li>&#8220;Alt-Right&#8221;: &#8220;goWordRight&#8221;,</li>
+<li>&#8220;Cmd-Left&#8221;: &#8220;goLineStart&#8221;,</li>
+<li>&#8220;Cmd-Right&#8221;: &#8220;goLineEnd&#8221;,</li>
+</ul>
+
+<p>Delete:</p>
+
+<ul>
+<li>&#8220;Alt-Backspace&#8221;: &#8220;delWordBefore&#8221;,</li>
+<li>&#8220;Ctrl-Alt-Backspace&#8221;: &#8220;delWordAfter&#8221;,</li>
+<li>&#8220;Alt-Delete&#8221;: &#8220;delWordAfter&#8221;,</li>
+</ul>
+
+<p>File commands:</p>
+
+<ul>
+<li>&#8220;Cmd-O&#8221;: &#8220;Open&#8221;,</li>
+<li>&#8220;Cmd-N&#8221;: &#8220;New&#8221;,</li>
+<li>&#8220;Cmd-S&#8221;: &#8220;Save&#8221;,</li>
+<li>&#8220;Shift-Cmd-S&#8221;: &#8220;SaveAs...&#8221;,</li>
+</ul>
+
+<p>Find and replace:</p>
+
+<ul>
+<li>&#8220;Cmd-F&#8221;: &#8220;find&#8221;,</li>
+<li>&#8220;Cmd-G&#8221;: &#8220;findNext&#8221;,</li>
+<li>&#8220;Shift-Cmd-G&#8221;: &#8220;findPrev&#8221;,</li>
+<li>&#8220;Cmd-Alt-F&#8221;: &#8220;replace&#8221;,</li>
+<li>&#8220;Shift-Cmd-Alt-F&#8221;: &#8220;replaceAll&#8221;,</li>
+</ul>
+
+<p>Indent line:</p>
+
+<ul>
+<li>&#8220;Cmd-[&#8221;: &#8220;indentLess&#8221;,</li>
+<li>&#8220;Cmd-]&#8221;: &#8220;indentMore&#8221;</li>
+</ul>
+<hr>
+</div>
+
+<footer>
+<label>Filename: </label><span id="title"></span><label>&nbsp;&nbsp;&mdash;&nbsp;&nbsp;Mode: </label><span id="mode"></span><label>&nbsp;&nbsp;&mdash;&nbsp;&nbsp;Version: 2014-03-19 &copy; HomeLab</label>
+</footer>
+
+<input style="display:none;" id="openFile" type="file" />
+<input style="display:none;" id="saveFile" type="file" nwsaveas />
+</body>
+</html>
