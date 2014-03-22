@@ -17,6 +17,9 @@
 		"title": "nodEdit",
 		"toolbar": false
 		},
+	"dependencies": {
+		"marked": "*"
+	},
 	"maintainers":[ {
 	   "name": "Jean-Yves Le Gall",
 	   "email": "legallj@mac.com",
