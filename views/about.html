@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>nodEdit - About</title>
+<!-- 
+<link rel="stylesheet" href="../css/style.css">
+ -->
+<style>
+body {
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+}
+
+h1 { text-shadow: 3px 3px 8px #aaa; }
+
+a {
+	text-decoration: none;
+	color: #79f;
+}
+
+a:hover { color: maroon; }
+
+code {
+	font-family: Courier, monospace, serif;
+	color: maroon;
+}
+
+blockquote {
+	margin: 0;
+	padding-left: 15px;
+	border-left: 4px solid #ccc;
+	font-style: italic;
+	color: #888;
+}
+
+#output {
+	font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+	font-size: 13px;
+	padding: 25px;
+	position: absolute;
+	top: 44px;
+	bottom: 27px;
+	left: 0;
+	right: 0;
+	z-index: 5;	/* above editor layers z = 0..3 */
+	background: #fff;
+	overflow: scroll;
+/*	display: none; */
+/*	visibility: hidden; hidden on start */
+}
+
+#output pre {
+	font-family: "Courier", mono;
+	font-size: 13px;
+	white-space: pre-wrap;
+}
+
+.buttons {
+	padding: 7px;
+	height: 30px;
+	background: maroon;
+/*	background: black;*/
+}
+
+header {
+	position: absolute; top: 7px;
+	right: 35px;
+	color: #ffc;
+	font-family:sans-serif;
+	font-size:28px;
+	letter-spacing:5px;
+/*	text-shadow:5px 3px 10px #000;*/
+	-webkit-animation: sweep 1s; /* Safari and Chrome */
+}
+
+@keyframes sweep /* Safari and Chrome */
+{
+	from {right: -200px;}
+	to   {right: 35px;}
+}
+@-webkit-keyframes sweep /* Firefox */
+{
+	from {right: -200px;}
+	to   {right: 35px;}
+}
+
+footer {
+	font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+	font-size: 13px;
+	white-space: nowrap;
+	position: absolute;
+	bottom: 0;
+	background: maroon;
+	color: #ffc;
+	padding-top: 7px;
+	height: 21px;
+	left: 0;
+	right: 0;
+	text-align: center;
+}
+
+footer label {
+/*  font-weight: bold; */
+	color: #ccc;
+}
+</style>
+</head>
+<body>
+<header>&mdash;&nbsp;nodEdit&thinsp;&bull;</header>
+<div class="buttons"></div>
+
+<div id="output">
+<!-- FRONT PAGE -->
+<h1>nodEdit &mdash; Minimal IDE</h1>
+
+<p>2014-03-20</p>
+
+<blockquote>Minimal IDE dedicated to single page application (SPA) development under NodeJS with WebKit.<br>This simple tool implements the read - execute - print - loop (REPL) paradigme using only HTML5, CSS3 and Javascript to develop/debug Shell scripts, NodeJS code or Markdown documentation files.</blockquote>
+
+<h2>CodeMirror-3.22</h2>
+
+<p>Download from <a href"https://github.com/marijnh/codemirror">GitHub</a> repository.<br>
+The project page is http://codemirror.net<br>
+The manual is at http://codemirror.net/doc/manual.html</p>
+
+<p>Editor Mode and Theme are selected according to the extension of the loaded file &mdash; as expected, the default mime type is text/plain. Some functions like <strong>jshit</strong> are automatically activated when the current file type is <em>Javascript</em>. Shortcut <code>[Ctrl-SPACE]</code> triggers code completion based on the words found around in the present document (not the language vocabulary).</p>
+
+<p>Editor <code>CodeMirror-2</code> fails to resize correctly then nodEdit was upgraded to <code>CodeMirror-3</code> &rarr; <strong>Ok!</strong> now...</p>
+
+<h2>Built in keyboard commands</h2>
+
+<p>Extract from <a href="https://github.com/marijnh/CodeMirror/blob/1cbf1f64001b36dc7115f6a36c0f919f59c434fa/lib/codemirror.js#L2880">Source code</a> with additional nodEdit specific commands.</p>
+<p><strong>WARN:</strong> Note that <code>[Cmd-Q]</code> key press from the Front-Page kills the OS-X process without saving the <strong>lastContext</strong>. Then use preferably the tray-menu <code>Quit</code> command in order to correctly record context for later use &mdash; you may also use Cmd-Q but only from the Editor-Page.</p>
+
+<h3>System commands only available from Front-Page:</h3>
+
+<ul>
+<li>&#8220;Ctrl-SPACE&#8221;: &#8220;Recall last context&#8221;,</li>
+<li>&#8220;Ctrl-ENTER&#8221;: &#8220;Toggle browser debug window&#8221;,</li>
+<li>&#8220;Ctrl-O&#8221;: &#8220;Open file chooser&#8221;,</li>
+<li>&#8220;Ctrl-N&#8221;: &#8220;Create a new document&#8221;,</li>
+<li>&#8220;Ctrl-L&#8221;: &#8220;Reload browser&#8221;,</li>
+</ul>
+
+<h3>General Editor-Page commands:</h3>
+
+<p>Text edit commands:</p>
+
+<ul>
+<li>&#8220;Cmd-C&#8221;: &#8220;Copy&#8221;,</li>
+<li>&#8220;Cmd-X&#8221;: &#8220;Cut&#8221;,</li>
+<li>&#8220;Cmd-V&#8221;: &#8220;Paste&#8221;,</li>
+<li>&#8220;Cmd-A&#8221;: &#8220;selectAll&#8221;,</li>
+<li>&#8220;Cmd-D&#8221;: &#8220;deleteLine&#8221;,</li>
+<li>&#8220;Cmd-Z&#8221;: &#8220;Undo&#8221;,</li>
+<li>&#8220;Shift-Cmd-Z&#8221;: &#8220;Redo&#8221;,</li>
+<li>&#8220;Cmd-Y&#8221;: &#8220;Redo&#8221;, (yank)</li>
+<li>&#8220;Ctrl-Space&#8221;: &#8220;autocomplete&#8221;, (agnostic)</li>
+</ul>
+
+<p>Move cursor:</p>
+
+<ul>
+<li>&#8220;Cmd-Up&#8221;: &#8220;goDocStart&#8221;,</li>
+<li>&#8220;Cmd-End&#8221;: &#8220;goDocEnd&#8221;,</li>
+<li>&#8220;Cmd-Down&#8221;: &#8220;goDocEnd&#8221;,</li>
+<li>&#8220;Alt-Left&#8221;: &#8220;goWordLeft&#8221;,</li>
+<li>&#8220;Alt-Right&#8221;: &#8220;goWordRight&#8221;,</li>
+<li>&#8220;Cmd-Left&#8221;: &#8220;goLineStart&#8221;,</li>
+<li>&#8220;Cmd-Right&#8221;: &#8220;goLineEnd&#8221;,</li>
+</ul>
+
+<p>Delete:</p>
+
+<ul>
+<li>&#8220;Alt-Backspace&#8221;: &#8220;delWordBefore&#8221;,</li>
+<li>&#8220;Ctrl-Alt-Backspace&#8221;: &#8220;delWordAfter&#8221;,</li>
+<li>&#8220;Alt-Delete&#8221;: &#8220;delWordAfter&#8221;,</li>
+</ul>
+
+<p>File commands:</p>
+
+<ul>
+<li>&#8220;Cmd-O&#8221;: &#8220;Open&#8221;,</li>
+<li>&#8220;Cmd-N&#8221;: &#8220;New&#8221;,</li>
+<li>&#8220;Cmd-S&#8221;: &#8220;Save&#8221;,</li>
+<li>&#8220;Shift-Cmd-S&#8221;: &#8220;SaveAs...&#8221;,</li>
+</ul>
+
+<p>Find and replace:</p>
+
+<ul>
+<li>&#8220;Cmd-F&#8221;: &#8220;find&#8221;,</li>
+<li>&#8220;Cmd-G&#8221;: &#8220;findNext&#8221;,</li>
+<li>&#8220;Shift-Cmd-G&#8221;: &#8220;findPrev&#8221;,</li>
+<li>&#8220;Cmd-Alt-F&#8221;: &#8220;replace&#8221;,</li>
+<li>&#8220;Shift-Cmd-Alt-F&#8221;: &#8220;replaceAll&#8221;,</li>
+</ul>
+
+<p>Indent line or simply use <code>Tab</code> chars:</p>
+
+<ul>
+<li>&#8220;Cmd-[&#8221;: &#8220;indentLess&#8221;,</li>
+<li>&#8220;Cmd-]&#8221;: &#8220;indentMore&#8221;</li>
+</ul>
+</div>
+
+<footer>
+Version: 2014-03-22 &copy; HomeLab
+</footer>
+
+</body>
+</html>
