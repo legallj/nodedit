@@ -19,26 +19,42 @@
  * @requires child_process
  * @require marked
  * @requires nw-gui
+ * @requires lastcontext.json
  */
+
+/** @global */
+/** {Module} Built in file system */
 var fs = require('fs');
+
+/** @global */
+/** {Module} Built in file path utilities */
 var path = require('path');
+
+/** @global */
+/** {Module} Built in process execution tools */
 var childProcess = require('child_process');
+
+/** @global */
+/** {Module} External Markdown to HTML converter */
 var marked = require('marked');
+
+/** @global */
+/** {Module} Node Webkit embedded GUI instance */
 var gui = require('nw.gui');
 
 // -----------------------------
 // GLOBAL VARIABLES
 // -----------------------------
 /** @global */
-/** Reference to the CodeMirror text editor instance */
+/** {Reference} to the CodeMirror text editor instance */
 var editor;
 
 /** @global */
-/** Reference to every button elements in DOM */
+/** {Reference} to every button elements in DOM */
 var newButton, openButton, saveButton, runButton, viewButton;
 
 /** @global */
-/** Reference to drop-down menu */
+/** {Reference} to drop-down menu */
 var menu;
 
 /** @global */
@@ -50,11 +66,11 @@ var fileEntry = null;
 var hasWriteAccess;
 
 /** @global */
-/** Reference to the WebKit clip board (paste board) */
+/** {Reference} to the WebKit clip board (paste board) */
 var clipboard = gui.Clipboard.get();
 
 /** @global */
-/** Reference to the output div DOM element */
+/** {Reference} to the '#output' div DOM element */
 var outPage;
 
 /** @global */
@@ -69,15 +85,27 @@ var extraKeys = {};
 /** {String} Current editor mode 'javascript', 'shell', 'markdown' or 'plain/text'  */
 var mode = '';
 
+/** @global */
+/** {Object} Remember CodeMirror context */
+var lastContext = require('lastcontext.json');
+
+/** @global */
+/** {String} Run time interpreter to use */
+var runTime = '';
+
+/** @global */
+/** {Reference} to secondary WebKit Chromium window */
+var new_win = null;
+
 // -----------------------------------------
 // Create Editor menu
 // -----------------------------------------
 /** @global */
-/** Reference to the WebKit Chromium window */
+/** {Reference} to the WebKit Chromium window */
 var win = gui.Window.get();
 
 /** @global */
-/** Reference to submenu of the WebKit tray-menu */
+/** {Reference} to submenu of the WebKit tray-menu */
 var subMenu = new gui.Menu();
 subMenu.append(new gui.MenuItem({
 	type: 'normal',
@@ -103,6 +131,33 @@ subMenu.append(new gui.MenuItem({
 }));
 subMenu.append(new gui.MenuItem({
 	type: 'normal',
+	label: 'Recall Last',
+	tooltip: 'Reload the last session and display document where it was leaved',
+	enabled: true,
+	click: function () {
+		console.log('recall last context', lastContext.file);	// DBG
+		if (!lastContext.file) {return; }	// Cancel
+		setFile(lastContext.file, true);
+		fs.readFile(lastContext.file, function (err, data) {
+			if (err) {
+				console.log('Read failed: ' + err);	// DBG
+			}
+			handleDocumentChange(lastContext.file);
+			// Fill editor page
+			editor.setValue(String(data));
+			// Scroll to set the last cursor vertical position at center
+			editor.scrollIntoView(lastContext.cursor, editor.getScrollInfo().clientHeight / 2);
+			// Put cursor at its last recoded position
+			editor.setCursor(lastContext.cursor);
+			// Show the editor page as a clean document
+			editor.focus();
+			dirtyBit = false;
+			$('#save').hide();
+		});
+	}
+}));
+subMenu.append(new gui.MenuItem({
+	type: 'normal',
 	label: 'Reload',
 	click: function () {
 		win.reload();
@@ -121,18 +176,41 @@ subMenu.append(new gui.MenuItem({
 		}
 	}
 }));
+subMenu.append(new gui.MenuItem({
+	type: 'normal',
+	label: 'About',
+	click: function () {
+		// Open help page in a small separate
+		// window without navigation bar
+		var new_win = gui.Window.open('about.html', {
+			position: 'center',
+			toolbar: true,
+			width: 800,
+			height: 600
+		});
+		new_win.moveTo(150, 100);
+	}
+}));
 subMenu.append(new gui.MenuItem({ type: 'separator' }));
 subMenu.append(new gui.MenuItem({
 	type: 'normal',
 	label: 'Quit',
 	tooltip: 'Close window and leave Application',
 	click: function () {
-		window.close();
+		// Simple 'window.close()' statement
+		// let the 'About' window opened..!
+		// Then instead, first save context
+		saveOnQuit();
+		// And use 'gui.App' methods to leave
+		// The 'quit()' method will not send close event
+		// to windows and app will just quit quietly.
+		gui.App.quit();
+		//gui.App.closeAllWindows();
 	}
 }));
 
 /** @global */
-/** Create a reference to tray icon with label */
+/** {Reference} Create a reference to tray icon with label */
 var tray = new gui.Tray({
 	title: 'nodEdit',
 	icon: 'img/16x16/16.png',
@@ -141,26 +219,34 @@ var tray = new gui.Tray({
 // Give a menu to the tray icon
 tray.menu = subMenu;
 
+// -----------------------------------------
+// Capture Cmd-Q to prevent OS-X kill process<br>
+// The editor must have focus to respond
+// -----------------------------------------
 /** @global */
-/* {Object} Default editor keyboard shortcuts<br>
- * The editor must have focus to respond
- */
+/** {Object} Default editor keyboard shortcuts */
 var defaultEditCmds = {
-	'Cmd-C': function () { clipboard.set(editor.getSelection()); },
-	'Cmd-X': function () { clipboard.set(editor.getSelection()); editor.replaceSelection(''); },
-	'Cmd-V': function () { editor.replaceSelection(clipboard.get()); },
-	'Cmd-S': function (instance) {handleSaveCmd(); },
-	'Cmd-O': function (instance) {handleOpenButton(); },
-	'Cmd-N': function (instance) {handleNewButton(); },
-	'Shift-Cmd-S': function (instance) {handleSaveButton(); },
+	'Cmd-C': function (cm) { clipboard.set(editor.getSelection()); },
+	'Cmd-X': function (cm) { clipboard.set(editor.getSelection()); editor.replaceSelection(''); },
+	'Cmd-V': function (cm) { editor.replaceSelection(clipboard.get()); },
+	'Cmd-S': function (cm) {handleSaveCmd(); },
+	'Cmd-O': function (cm) {handleOpenButton(); },
+	'Cmd-N': function (cm) {handleNewButton(); },
+	'Cmd-Q': function (cm) {
+			saveOnQuit();
+			gui.App.quit();
+			//gui.App.closeAllWindows();
+		},
+	'Shift-Cmd-S': function (cm) {handleSaveButton(); },
 	'Cmd-Alt-O': function (cm) {cm.toggleOverwrite(); },
 	'Ctrl-Space': 'autocomplete'
 };
 
+// -----------------------------------------
+// The editor must have focus to respond
+// -----------------------------------------
 /** @global */
-/* {Object} Markdown specific keyboard shortcuts<br>
- * The editor must have focus to respond
- */
+/** {Object} Markdown specific keyboard shortcuts */
 var markdownEditCmds = {
 	'Cmd-B': function (doc) { /* Bold */
 		if (doc.somethingSelected()) {
@@ -231,15 +317,16 @@ var markdownEditCmds = {
 // RegExp tester at http://regex101.com/
 // -----------------------------
 /**
- * Configure the editor according to doc-type
+ * Configure the editor according to doc-type<br>
  * @param {String} title - Full path of the target file
  */
 function handleDocumentChange(title) {
-	$('button#run').hide();
-	$('button#view').hide();
+	$('#run').hide();
+	$('#view').hide();
 	// Default 'js' edit parameters
 	mode = 'javascript';
 	var modeName = 'JavaScript';
+	runTime = '';
 	var lint = true;
 	var theme = 'monokai';
 	if (title) {
@@ -256,7 +343,8 @@ function handleDocumentChange(title) {
 		case '.js':
 			mode = 'javascript';
 			modeName = 'JavaScript';
-			$('button#run').show();
+			runTime = '/usr/bin/env node';
+			$('#run').show();
 			break;
 		case '.json':
 			mode = {name: 'javascript', json: true};
@@ -266,7 +354,11 @@ function handleDocumentChange(title) {
 			mode = 'htmlmixed';
 			modeName = 'HTML';
 			lint = false;
-			$('button#view').show();
+			theme = 'default';
+			editor.setOption('autoCloseTags', true);
+			// Define Emmet output profile
+			editor.setOption('profile', 'xhtml');
+			$('#view').show();
 			break;
 		case '.css':
 			mode = 'css';
@@ -293,6 +385,8 @@ function handleDocumentChange(title) {
 		case '.sh':
 			mode = 'shell';
 			modeName = 'Shell';
+			theme = 'vibrant-ink';
+			runTime = '/usr/bin/env bash ';
 			lint = false;
 			$('button#run').show();
 			break;
@@ -319,7 +413,7 @@ function handleDocumentChange(title) {
 	document.getElementById('mode').innerHTML = modeName;
 	// New clean document
 	dirtyBit = false;
-	$('save').hide();
+	$('#save').hide();
 } // end handleDocumentChange
 
 // -----------------------------
@@ -348,7 +442,7 @@ function setFile(theFileEntry, isWritable) {
 /**
  * Read file content and fill the editor<br>
  * Called by: readFileIntoEditor event handler<br>
- * Make call: handleDocumentChange()
+ * Make call: handleDocumentChange()<br>
  * @param {String} theFileEntry - Full path of the current file
  */
 function readFileIntoEditor(theFileEntry) {
@@ -370,8 +464,9 @@ function readFileIntoEditor(theFileEntry) {
 /**
  * Write editor text content into file and adjust UNIX 'rwx' mode<br>
  * Called by: onChosenFileToSave event handler, handleSaveButton(), handleSaveCmd()<br>
- * Make call: handleDocumentChange()
- * @param {String} theFileEntry - Full path of the current file
+ * Make call: handleDocumentChange()<br>
+ * @param {String} theFileEntry - Full path of the current file<br>
+ * @returns {Object} null or write error object
  */
 function writeEditorToFile(theFileEntry) {
 	fs.writeFile(theFileEntry, editor.getValue(), function (err) {
@@ -379,8 +474,8 @@ function writeEditorToFile(theFileEntry) {
 			console.log('Write failed: ' + err);	// DBG
 			return err;
 		}
-		// Octal 0777:0666
-		var xxx = (mode === 'shell') ? 511:438;
+		// Octal 0777 or 0666 i.e. 'rwx' or 'rw-' file mode
+		var xxx = (mode === 'shell' || mode === 'javascript') ? 511:438;
 		fs.chmod(theFileEntry, xxx, function (err) {
 			handleDocumentChange(theFileEntry);
 			console.log('Write completed with mode:', xxx);	// DBG
@@ -395,7 +490,7 @@ function writeEditorToFile(theFileEntry) {
 /**
  * Open file chooser event handlers<br>
  * Called by: readFileIntoEditor event handler<br>
- * Make call: setFile(), readFileIntoEditor()
+ * Make call: setFile(), readFileIntoEditor()<br>
  * @param {String} theFileEntry - Full path of the current file
  */
 var onChosenFileToOpen = function (theFileEntry) {
@@ -406,7 +501,7 @@ var onChosenFileToOpen = function (theFileEntry) {
 /**
  * Save file chooser event handlers<br>
  * Called by: save file event handler<br>
- * Make call: setFile(), writeEditorToFile()
+ * Make call: setFile(), writeEditorToFile()<br>
  * @param {String} theFileEntry - Full path of the current file
  */
 var onChosenFileToSave = function (theFileEntry) {
@@ -421,7 +516,7 @@ var onChosenFileToSave = function (theFileEntry) {
 /**
  * New file button event handlers<br>
  * Called by: newButton.addEventListener()<br>
- * Make call: editor.setValue()
+ * Make call: editor.setValue()<br>
  */
 function handleNewButton() {
 	if (true) {
@@ -463,43 +558,100 @@ function handleSaveButton() {
 	}
 }
 /**
- * Run file button event handlers,
- * try to execute Node or Shell file providing
- * they are executable as a child process<br>
+ * Run file button event handlers,<br>
+ * - Save file before run<br>
+ * - Prompt user for arguents<br>
  * Called by: runButton.addEventListener()<br>
+ * Make call: doRunFile()<br>
  */
 function handleRunButton() {
 	if (outPage.is(':visible')) {
+		// Return to editor page
 		outPage.hide();
 		editor.focus();
 		$('#run').text('Run');
 		return;
 	}
+	if (dirtyBit) {
+		// Save content before run
+		fs.writeFileSync(fileEntry, editor.getValue());
+		dirtyBit = false;
+		$('#save').hide();
+	}
 	console.log('Run handler on file', fileEntry);	// DBG
-	var args = prompt('Execution arguments');
-	if (args === null) {return; }	// Cancel
+	// Get and check user's arguments
+	// Replace the ugly 'prompt' modal window
+	// Use instead the built in dialog extension
+	// closed by ESC (cancel) or ENTER (validate)
+	editor.openDialog('<input type="text" value="default">Execution args</input>', doRunFile);
+}
+
+/**
+ * Run file<br>
+ * Try to execute Node or Shell file providing
+ * they are executable as a child process<br>
+ * Called by: handleRunButton() dialog callback<br>
+ */
+function doRunFile(argStr) {
+	//var argStr = prompt('Execution arguments');
+	var args;
+	if (argStr === null) {
+		return;	// Cancel execution
+	}
+	else if (argStr === '') {
+		args = null;	// No exec arguments
+	}
+	else {
+		args = argStr.split(' ');	// Array of words
+	}
 	console.log('Arguments:', args);	// DBG
-	fs.stat(fileEntry, function (err, stats) {
-		//console.log('stats:', stats);	// DBG
-		// Octal constant 0111 to check if 'executable'
-		var xxx = stats.mode & 73;
-		if (stats.isFile() && xxx === 73) {
-			console.log('File executable by', process.env.USER);
-			childProcess.execFile(fileEntry, [args], null, function (error, stdout, stderr) {
-				if (error !== null) {
-					console.log('exec error: ' + error);
-				}
-				console.log('stderr: ' + stderr);
-				outPage.html('<pre>' + stdout.toString() + '</pre>');
-				$('<pre />').text(stderr.toString()).css('color', 'red').prependTo(outPage);
-			});
-		}
-		else {
-			outPage.html($('<pre />').text('Execute file:\n' + fileEntry + '\nPermission denied..!').css('color', 'red'));
-		}
-		outPage.show();
-		$('#run').text('Edit');
-	});
+	// Clear output page (console like)
+	outPage.empty();
+	// Check if a run time interpreter
+	// is specified with a shebang in first line
+	// ---------------------------------
+	// Use childProcess.exec with the right run time call
+	// http://nodejs.org/api/child_process.html#child_process_child_process_exec_command_options_callback
+	// Create a command like:
+	// var child = childProcess.exec('/usr/bin/env node ./test.js tagada', function (error, stdout, stderr) {console.log(stdout); });
+	// ---------------------------------
+	var firstLine = editor.getLine(0);
+	if (! /^#!/.test(firstLine)) {
+		outPage.append($('<pre />').text('Run time interpreter declaration not found in first line:\n' + firstLine + '\nThen try to use:\n' + runTime).css('color', 'red'));
+		// Build the command line to execute
+		var cmdList = [runTime];
+		cmdList.push(fileEntry);
+		cmdList = cmdList.concat(args);
+		childProcess.exec(cmdList.join(' '), function (error, stdout, stderr) {
+			if (error !== null) {
+				console.log('exec error: ' + error);
+				$('<pre />').text(stderr.toString()).css('color', 'red').appendTo(outPage);
+			}
+			outPage.append('<pre>' + stdout.toString() + '</pre>');
+		});
+	}
+	else {
+		fs.stat(fileEntry, function (err, stats) {
+			//console.log('stats:', stats);	// DBG
+			// Octal constant 0111 to check if file mode is '??x' i.e. executable
+			var xxx = stats.mode & 73;
+			if (stats.isFile() && xxx === 73) {
+				console.log('File executable by', process.env.USER);	// DBG Info
+				childProcess.execFile(fileEntry, args, null, function (error, stdout, stderr) {
+					if (error !== null) {
+						console.log('execFile error: ' + error);
+						$('<pre />').text(stderr.toString()).css('color', 'red').appendTo(outPage);
+					}
+					outPage.append('<pre>' + stdout.toString() + '</pre>');
+				});
+			}
+			else {
+				outPage.html($('<pre />').text('Execute file:\n' + fileEntry + '\nPermission denied..!').css('color', 'red'));
+			}
+		});
+	}
+	outPage.show();
+	$('#run').text('Edit');
 }
 // --------- Buttons -----------
 // is(selector) not supported by Zepto
@@ -514,29 +666,195 @@ function handleRunButton() {
 function handleViewButton() {
 	console.log('View handler');
 	if (outPage.is(':visible')) {
+		// The 'output' page is displayed
+		// then switch to 'editor' page
 		console.log('Hide output');
 		outPage.hide();
 		$('#view').text('View');
+		return;
 	}
-	else {
-		console.log('Show output');
+	console.log('Show output:', mode);
+	// Take actual 'mode' into account
+	// Provisional switch-case for future modes
+	switch (mode) {
+	case 'htmlmixed':
+		if (!new_win) {
+			// Open a separate window
+			// with(out) navigation bar
+			new_win = gui.Window.open('file://' + fileEntry, {
+				position: 'center',
+				toolbar: true,
+				width: 800,
+				height: 600
+			});
+			// Put window aside
+			new_win.moveTo(150, 100);
+			// Register close event to remove reference
+			// TODO
+			// Fix bug when new_win is closed by hand
+			new_win.on('closed', function () {
+				new_win = null;
+				console.log('new_win closed');	// DBG
+			});
+			new_win.on('close', function () {
+				this.hide();
+				this.close(true);
+				new_win = null;
+				console.log('Close new_win');	// DBG
+				$('#view').show();
+			});
+			// Hide 'View' button, now rely on
+			// 'Save' button to refresh window
+			$('#view').hide();
+		}
+		else {
+			// Refresh window display
+			// (new content assumed)
+			new_win.reloadIgnoringCache();
+		}
+		break;
+	default:
+		// Render into 'output' page
+		// the editor content as Markdown
 		outPage.html(marked(editor.getValue()));
 		outPage.show();
 		$('#view').text('Edit');
-	}
-}
+	} // end switch case
+} // end handleViewButton()
 /**
  * Save file on keyboard command 'Cmd-S'<br>
  * Called by: defaultEditCmds entry<br>
  */
 function handleSaveCmd() {
 	console.log('Save file:', fileEntry);	// DBG
-	if (!fileEntry) {return; }	// No file name, use 'save as' instead
+	if (!fileEntry) {return; }	// No file name, use 'Save As' instead
 	var err = writeEditorToFile(fileEntry);
 	console.log('File saved', (err ? 'ERROR':'Ok'));
 	dirtyBit = false;
 	$('#save').hide();
+	if (new_win) {
+		// Refresh display with new content
+		new_win.reloadIgnoringCache();
+		$('#view').hide();
+	}
 }
+
+// ------ Line numbers from text -------
+// Refer to JavaScript W3 school:
+// http://www.w3schools.com/jsref/jsref_obj_global.asp
+// http://www.hacksparrow.com/node-js-exports-vs-module-exports.html
+// Regex online tester:
+// http://regex101.com/
+// -------------------------------------
+/**
+ * Scan document to list functions<br>
+ * Record line number where to jump<br>
+ * Relies on correct usage of DocStrings<br>
+ * Called by: Popup context menu label 'List Funcs'<br>
+ * @param {Object} editor - CodeMirror instance
+ * @returns {String} html - Formated HTML table
+ */
+function listFuncs(editor) {
+	// TEST scan editor with:
+	//   editor.lineCount()
+	//   editor.lineInfo(line) --> {line, handle, text, markerText, markerClass, lineClass, bgClass}
+	// Benchmark result:
+	//   Slower than direct method, then discarded
+
+	//var deb = new Date();	// Benchmark
+	// Make an array of lines with editor content
+	var lines = editor.getValue().split('\n');
+	var result = [];
+	// Compile RegExp only once
+	var funcPatt = /^\s*function\s+(\w+)/;
+	funcPatt.compile(funcPatt);
+	var handlePatt = /(\w+)\s+=\s+function/;
+	handlePatt.compile(handlePatt);
+
+	// Scan lines in array (10x faster than 'for in')
+	//console.log('listFuncs nb lines:', lines.length);
+	var count = 0;
+	for (var lnum = 0; lnum < lines.length; lnum++) {
+		// Skip empty lines
+		if (lines[lnum].length === 0) {
+			continue;
+		}
+		var mf = lines[lnum].match(funcPatt);
+		var mh = lines[lnum].match(handlePatt);
+		// This method returns 'null' if no match is found.
+		if (mf || mh) {
+			var cmt = [];
+			var mcmt = null;
+			// Search JSDoc comment in the 10 lines above declaration
+			for (var before = 1; before < 12; before++) {
+				if (lines[lnum - before].indexOf('/**') !== -1) {
+					// Optimization:
+					// Stop scan as soon as the leading doc-string is found
+					break;
+				}
+				mcmt = lines[lnum - before].match(/\*\s+(.+)$/);
+				if (mcmt) {
+					cmt.unshift(mcmt[1]);
+				}
+			} // end for
+			if (mh) {
+				// Handler function
+				result.push('<span class="lnum">' + (lnum + 1) + '</span></td><td><em>' + mh[1] + '</em></td><td><em>on Event</em></td><td>' + cmt.join(' '));
+				//editor.setMarker(lnum, '●%N%');	// Seems not implemented in CodeMirror-3..!
+			}
+			else if (mf) {
+				// Callable function
+				result.push('<span class="lnum">' + (lnum + 1) + '</span></td><td>' + mf[1] + '</td><td>on Call</td><td>' + cmt.join(' '));
+			}
+			count++;
+		}
+	} // end for
+	console.log('listFuncs last line:', lnum, lines.length);
+	var head = '<h1>Functions definition</h1>\n<table><tbody>\n<tr><th>Line</th><th>Name</th><th>Execute</th><th>JSDoc Description</th></tr>\n<tr><td>';
+	var tail = '</td></tr>\n</tbody>\n<caption><em>&mdash;&nbsp;Found ' + count + ' functions&nbsp;&mdash;</em></caption></table>\n<p><strong>Back to editor at line [<span class="lnum">1</span>]</strong></p>';
+	var html = head + result.join('</td></tr>\n<tr><td>') + tail;
+	//var end = new Date();	// Benchmark
+	//console.log(end.getTime() - deb.getTime(), 'ms');	// Benchmark
+	return html;
+} // end listFuncs()
+
+/**
+ * Scan document to list variables<br>
+ * Record line number where to jump<br>
+ * Relies on correct usage of DocStrings<br>
+ * Called by: Popup context menu label 'List Vars'<br>
+ * @param {Object} editor - CodeMirror instance
+ * @returns {String} html - Formated HTML table
+ */
+function listVars(editor) {
+	var lines = editor.getValue().split('\n');
+	var result = [];
+	// Compile RegExp only once
+	var varPatt = /^var\s+(\w+)/;
+	varPatt.compile(varPatt);
+	var typePatt = /\/\*\*\s+(.+)\*\//;
+	typePatt.compile(typePatt);
+	// Scan lines in array (10x faster than 'for in')
+	var count = 0;
+	for (var lnum = 0; lnum < lines.length; lnum++) {
+		// Skip empty lines
+		if (lines[lnum].length === 0) {
+			continue;
+		}
+		var mv = lines[lnum].match(varPatt);
+		var isFn = (lines[lnum].indexOf('function') > -1) ? '{Handler} Refer to list of functions...':'???';
+		if (mv) {
+			//console.log('var', mv[1]);	// DBG
+			var mt = lines[lnum - 1].match(typePatt);
+			result.push('<span class="lnum">' + (lnum + 1) + '</span></td><td>' + mv[1] + '</td><td>' + (mt ? mt[1]:isFn));
+			count++;
+		}
+	} // end for
+	var head = '<h1>Global Variables</h1>\n<table><tbody>\n<tr><th>Line</th><th>Name</th><th>Type</th></tr>\n<tr><td>';
+	var tail = '</td></tr>\n</tbody>\n<caption><em>&mdash;&nbsp;Found ' + count + ' variables&nbsp;&mdash;</em></caption></table>\n<p><strong>Back to editor at line [<span class="lnum">1</span>]</strong></p>';
+	var html = head + result.join('</td></tr>\n<tr><td>') + tail;
+	return html;
+} // end Vars()
 
 // -----------------------------
 // Popup context menu
@@ -566,6 +884,41 @@ function initContextMenu() {
 			editor.replaceSelection(clipboard.get());
 		}
 	}));
+	menu.append(new gui.MenuItem({ type: 'separator' }));
+	menu.append(new gui.MenuItem({
+		label: 'List Funcs',
+		click: function () {
+			$('#output').html(listFuncs(editor));
+			$('#output').show();
+			$('.lnum').click(function () {
+				var numLine = $(this).text() - 1;
+				//console.log('lnum:', numLine);	// DBG
+				$('#output').hide();
+				editor.scrollIntoView(numLine, editor.getScrollInfo().clientHeight / 2);
+				// Put cursor at beginning of function
+				editor.setCursor({line: numLine, ch: 0});
+				// Show the editor page
+				editor.focus();
+			});
+		}
+	}));
+	menu.append(new gui.MenuItem({
+		label: 'List Vars',
+		click: function () {
+			$('#output').html(listVars(editor));
+			$('#output').show();
+			$('.lnum').click(function () {
+				var numLine = $(this).text() - 1;
+				//console.log('lnum:', numLine);	// DBG
+				$('#output').hide();
+				editor.scrollIntoView(numLine, editor.getScrollInfo().clientHeight / 2);
+				// Put cursor at beginning of function
+				editor.setCursor({line: numLine, ch: 0});
+				// Show the editor page
+				editor.focus();
+			});
+		}
+	}));
 /**
  * Display context menu on mouse right-button<br>
  * Called by: mouse event<br>
@@ -578,16 +931,48 @@ document.getElementById('editor').addEventListener('contextmenu',
 	});
 }
 
+/**
+ * Save nodEdit context in JSON file on leaving application<br>
+ * Called by: onbeforeunload event<br>
+ */
+function saveOnQuit() {
+	// Avoid tray duplication on reload
+	tray.remove();
+	tray = null;
+	// Record last context
+	lastContext.file = fileEntry;
+	lastContext.cursor = editor.getCursor();
+	var jsonString = JSON.stringify(lastContext, null, ' ');
+	//console.log('lastcontext.json', jsonString);	// DBG
+	fs.writeFileSync('node_modules/lastcontext.json', jsonString);
+	//gui.App.clearCache();
+	// NOTE: Return 'false' cause a confirmation
+	// dialog to popup on quit (uncomfortable)
+	//return false;
+}
+
 // =============================
 //   INIT ON DOCUMENT LOADED
 // =============================
 /**
  * Initialize application<br>
- * Called by: onload even<br>
+ * Replace window.onload = function () {...}<br>
+ * Called by: win.on 'loaded' webkit App even<br>
  */
-window.onload = function () {
-	// Avoid tray duplication on reload
-	window.onbeforeunload = function () { tray.remove(); tray = null; };
+win.on('loaded', function () {
+	// Try to register window close event to save settings as per:
+	// http://stackoverflow.com/questions/13443503/how-to-run-javascript-code-on-window-close
+	//window.onbeforeunload = saveOnQuit;
+	// -------------------------
+	// Use instead the specified webkit method
+	// to also respond to manual close window
+	// https://github.com/rogerwang/node-webkit/wiki/Window
+	// -------------------------
+	win.on('close', function () {
+		this.hide(); // Pretend to be closed already
+		saveOnQuit();
+		this.close(true);
+	});
 
 	// Manage show/hide window command
 	// from tray menu or window button
@@ -630,41 +1015,55 @@ window.onload = function () {
 	// Register keyboard shortcuts on Mac OS-X
 	// http://stackoverflow.com/questions/14919459/using-jquery-on-to-watch-for-enter-key-press
 	// -------------------------------------
-	// TODO Conflict with buttons activate
-// 	if (process.platform === 'darwin') {
-// 		$(document).keypress(function (event) {
-// 			console.log('Keyboard event:', event.keyCode, event.ctrlKey);	// DBG
-// 			if (event.ctrlKey) {
-// 				switch (event.keyCode) {
-// 					case 0:
-// 						// [Ctrl-SPACE]
-// 						// Hide output page
-// 						$('#output').hide();
-// 						break;
-// 					case 15:
-// 						// [Ctrl-O]
-// 						// Open file
-// 						handleOpenButton();
-// 						break;
-// 					case 13:
-// 						// [Ctrl-ENTER]
-// 						// Not assigned
-// 						break;
-// 					case 14:
-// 						// [Ctrl-N]
-// 						// Create new file
-// 						handleNewButton();
-// 						break;
-// 					default:
-// 						$.noop();
-// 				}
-// 			}
-// 		});
-// 	}
-
+	// TODO:
+	// Solve conflict with buttons activation
+	// Cmd-Q and win.close() kill process but
+	// window.close() is correctly executed
+	if (process.platform === 'darwin') {
+		$(document).keypress(function (event) {
+			console.log('Keyboard event:', event.keyCode, event.ctrlKey);	// DBG
+			if (event.ctrlKey) {
+				switch (event.keyCode) {
+					case 0:
+						// [Ctrl-SPACE]
+						// Recall last context
+						tray.menu.items[2].click();
+						break;
+					case 12:
+						// [Ctrl-L]
+						// Reload browser page
+						tray.menu.items[3].click();
+						break;
+					case 13:
+						// [Ctrl-ENTER]
+						// Toggle Debug Window
+						tray.menu.items[4].click();
+						break;
+					case 14:
+						// [Ctrl-N]
+						// Create new file
+						handleNewButton();
+						break;
+					case 15:
+						// [Ctrl-O]
+						// Open file chooser
+						handleOpenButton();
+						break;
+					default:
+						$.noop();
+				}
+			}
+		});
+	}
+	/**
+	 * Initialize word completion addon<br>
+	 * Called by: [Ctrl-SPACE] key event<br>
+	 * @param {Instance} cm - CodeMirror
+	 */
 	CodeMirror.commands.autocomplete = function (cm) {
 		CodeMirror.showHint(cm, CodeMirror.hint.anyword);
 	};
+
 	editor = new CodeMirror(
 		document.getElementById('editor'),
 		{
@@ -698,18 +1097,26 @@ window.onload = function () {
 	outPage.append('<pre>CodeMirror-3.22 running node-webkit ' + process.version + ' under ' + process.platform + '\nOpen or create a new file...\n</pre>');
 	outPage.show();
 
-	// Display window
+	// -------------------------
+	// File 'package.json' contains option "show": false.
+	// To make the app seem to start smoothly, you should
+	// show the main window after everything is ready. As per:
+	// https://github.com/rogerwang/node-webkit/wiki/Show-window-after-page-is-ready
+	// -------------------------
+	// Display 'nw.gui' window
 	win.show();
 	// and put focus on it
 	win.focus();
-};
+});
 
 // -----------------------------
 // Window resize event handler
+// Specified webkit method below crash..!
+// win.on('resize', function (width, height) {...});
 // -----------------------------
 /**
  * Resize window and adjust editor page<br>
- * Called by: resize even<br>
+ * Called by: 'resize' even<br>
  * Make call: editor.getScrollerElement()
  */
 window.onresize = function () {

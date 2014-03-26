@@ -3,7 +3,7 @@
 	"version": "0.1.11",
 	"description": "Minimal IDE dedicated to single page application (SPA) development under NodeJS with WebKit.",
 	"keywords": ["editor", "IDE", "node", "webkit"],
-	"version": "0.1.1",
+	"version": "0.1.2",
 	"main": "views/main.html",
 	"no-edit-menu": true,
 	"chromium-args": "--child-clean-exit",
@@ -13,7 +13,7 @@
 		"min_width": 640,
 		"height": 768,
 		"min_height": 480,
-		"show": true,
+		"show": false,
 		"title": "nodEdit",
 		"toolbar": false
 		},
