@@ -158,13 +158,6 @@ subMenu.append(new gui.MenuItem({
 }));
 subMenu.append(new gui.MenuItem({
 	type: 'normal',
-	label: 'Reload',
-	click: function () {
-		win.reload();
-	}
-}));
-subMenu.append(new gui.MenuItem({
-	type: 'normal',
 	label: 'Dev Tools',
 	tooltip: 'Toggle debug window',
 	click: function () {
@@ -194,6 +187,16 @@ subMenu.append(new gui.MenuItem({
 subMenu.append(new gui.MenuItem({ type: 'separator' }));
 subMenu.append(new gui.MenuItem({
 	type: 'normal',
+	label: 'Reload',
+	click: function () {
+		// Avoid tray duplication on reload
+		tray.remove();
+		tray = null;
+		win.reload();
+	}
+}));
+subMenu.append(new gui.MenuItem({
+	type: 'normal',
 	label: 'Quit',
 	tooltip: 'Close window and leave Application',
 	click: function () {
@@ -210,14 +213,8 @@ subMenu.append(new gui.MenuItem({
 }));
 
 /** @global */
-/** {Reference} Create a reference to tray icon with label */
-var tray = new gui.Tray({
-	title: 'nodEdit',
-	icon: 'img/16x16/16.png',
-	alticon: 'img/16x16/16red.png'
-});
-// Give a menu to the tray icon
-tray.menu = subMenu;
+/** {Reference} Reference to tray icon with label */
+var tray = null;
 
 // -----------------------------------------
 // Capture Cmd-Q to prevent OS-X kill process<br>
@@ -343,6 +340,7 @@ function handleDocumentChange(title) {
 		case '.js':
 			mode = 'javascript';
 			modeName = 'JavaScript';
+			theme = 'vibrant-ink';
 			runTime = '/usr/bin/env node';
 			$('#run').show();
 			break;
@@ -383,6 +381,7 @@ function handleDocumentChange(title) {
 			$('button#view').show();
 			break;
 		case '.sh':
+		case '.command':
 			mode = 'shell';
 			modeName = 'Shell';
 			theme = 'vibrant-ink';
@@ -713,12 +712,37 @@ function handleViewButton() {
 			new_win.reloadIgnoringCache();
 		}
 		break;
-	default:
-		// Render into 'output' page
+	case 'markdown':
+		// Render Markdown into 'output' page
 		// the editor content as Markdown
 		outPage.html(marked(editor.getValue()));
+		// Highlight code blocks
+		$('#output pre code').each(function (i, el) {
+			hljs.highlightBlock(el);
+		});
+		// Register Web links
+		$('#output a').each(function (i, el) {
+			$(this).click(function (ev) {
+				ev.preventDefault();
+				var href = $(this).attr('href');
+				//console.log('href:', href);	// DBG
+				// Open Web page in a small separate
+				// browser window with its navigation bar
+				var new_win = gui.Window.open(href, {
+					position: 'center',
+					toolbar: true,
+					width: 800,
+					height: 600
+				});
+				new_win.moveTo(150, 100);
+			});
+		});
 		outPage.show();
 		$('#view').text('Edit');
+		break;
+	default:
+		// Nothing to display
+		$.noop();
 	} // end switch case
 } // end handleViewButton()
 /**
@@ -960,6 +984,15 @@ function saveOnQuit() {
  * Called by: win.on 'loaded' webkit App even<br>
  */
 win.on('loaded', function () {
+	// Create tray menu
+	tray = new gui.Tray({
+		title: 'nodEdit',
+		icon: 'img/16x16/16.png',
+		alticon: 'img/16x16/16red.png'
+	});
+	// Give a menu to the tray icon
+	tray.menu = subMenu;
+
 	// Try to register window close event to save settings as per:
 	// http://stackoverflow.com/questions/13443503/how-to-run-javascript-code-on-window-close
 	//window.onbeforeunload = saveOnQuit;
@@ -1055,11 +1088,16 @@ win.on('loaded', function () {
 			}
 		});
 	}
-	/**
-	 * Initialize word completion addon<br>
-	 * Called by: [Ctrl-SPACE] key event<br>
-	 * @param {Instance} cm - CodeMirror
-	 */
+
+	// Configure highlight.pack to replace 'tab' by 4 spaces
+	// Refer to http://highlightjs.org/usage/
+	hljs.configure({tabReplace: '    '});
+
+   /**
+	* Initialize word completion addon<br>
+	* Called by: [Ctrl-SPACE] key event<br>
+	* @param {Instance} cm - CodeMirror editor
+	*/
 	CodeMirror.commands.autocomplete = function (cm) {
 		CodeMirror.showHint(cm, CodeMirror.hint.anyword);
 	};
