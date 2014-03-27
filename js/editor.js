@@ -253,10 +253,15 @@ var markdownEditCmds = {
 	},
 	'Cmd-I': function (doc) { /* Italic */
 		if (doc.somethingSelected()) {
+			doc.replaceSelection('*' + doc.getSelection() + '*');
+		}
+	},
+	'Cmd-U': function (doc) { /* Underline (Haroopad only) */
+		if (doc.somethingSelected()) {
 			doc.replaceSelection('_' + doc.getSelection() + '_');
 		}
 	},
-	'Cmd-J': function (doc) { /* Italic */
+	'Cmd-J': function (doc) { /* Code */
 		if (doc.somethingSelected()) {
 			doc.replaceSelection('`' + doc.getSelection() + '`');
 		}
@@ -335,6 +340,8 @@ function handleDocumentChange(title) {
 		document.getElementById('title').innerHTML = title;
 		document.title = title;
 		extraKeys = defaultEditCmds;
+		menu.items[5].enabled = false;
+		lint = false;
 		// Test file extension
 		switch (path.extname(title)) {
 		case '.js':
@@ -342,6 +349,9 @@ function handleDocumentChange(title) {
 			modeName = 'JavaScript';
 			theme = 'vibrant-ink';
 			runTime = '/usr/bin/env node';
+			extItem.submenu = submenuJavascript;
+			menu.items[5].enabled = true;
+			lint = true;
 			$('#run').show();
 			break;
 		case '.json':
@@ -368,7 +378,6 @@ function handleDocumentChange(title) {
 		case '.markdown':
 			mode = 'markdown';
 			modeName = 'Markdown';
-			lint = false;
 			theme = 'solarized light';
 			// Use jQuery function to extend the keyMap
 			// -------------
@@ -378,6 +387,8 @@ function handleDocumentChange(title) {
 			// objects, you can do so by passing an empty object as the target.
 			// -------------
 			extraKeys = $.extend({}, defaultEditCmds, markdownEditCmds);
+			extItem.submenu = submenuMarkdown;
+			menu.items[5].enabled = true;
 			$('button#view').show();
 			break;
 		case '.sh':
@@ -386,14 +397,12 @@ function handleDocumentChange(title) {
 			modeName = 'Shell';
 			theme = 'vibrant-ink';
 			runTime = '/usr/bin/env bash ';
-			lint = false;
 			$('button#run').show();
 			break;
 		default :
 			mode = 'text/plain';
 			modeName = 'Plain text';
 			theme = 'default';
-			lint = false;
 		} // end switch
 	}
 	else {
@@ -405,6 +414,7 @@ function handleDocumentChange(title) {
 		lint = false;
 	} // end if
 	console.log('Found doc type:', mode);	// DBG
+	extItem.label = modeName;
 	editor.setOption('mode', mode);
 	editor.setOption('lint', lint);
 	editor.setOption('theme', theme);
@@ -460,6 +470,7 @@ function readFileIntoEditor(theFileEntry) {
 		$('#save').hide();
 	});
 }
+
 /**
  * Write editor text content into file and adjust UNIX 'rwx' mode<br>
  * Called by: onChosenFileToSave event handler, handleSaveButton(), handleSaveCmd()<br>
@@ -652,6 +663,7 @@ function doRunFile(argStr) {
 	outPage.show();
 	$('#run').text('Edit');
 }
+
 // --------- Buttons -----------
 // is(selector) not supported by Zepto
 // for non-standard pseudo-selectors
@@ -745,6 +757,7 @@ function handleViewButton() {
 		$.noop();
 	} // end switch case
 } // end handleViewButton()
+
 /**
  * Save file on keyboard command 'Cmd-S'<br>
  * Called by: defaultEditCmds entry<br>
@@ -785,6 +798,8 @@ function listFuncs(editor) {
 	// Benchmark result:
 	//   Slower than direct method, then discarded
 
+	// Record current line number to later return on it
+	var curLine = editor.getCursor().line + 1;
 	//var deb = new Date();	// Benchmark
 	// Make an array of lines with editor content
 	var lines = editor.getValue().split('\n');
@@ -835,7 +850,7 @@ function listFuncs(editor) {
 	} // end for
 	console.log('listFuncs last line:', lnum, lines.length);
 	var head = '<h1>Functions definition</h1>\n<table><tbody>\n<tr><th>Line</th><th>Name</th><th>Execute</th><th>JSDoc Description</th></tr>\n<tr><td>';
-	var tail = '</td></tr>\n</tbody>\n<caption><em>&mdash;&nbsp;Found ' + count + ' functions&nbsp;&mdash;</em></caption></table>\n<p><strong>Back to editor at line [<span class="lnum">1</span>]</strong></p>';
+	var tail = '</td></tr>\n</tbody>\n<caption><em>&mdash;&nbsp;Found ' + count + ' functions&nbsp;&mdash;</em></caption></table>\n<p><strong>Back to editor at line [<span class="lnum">' + curLine + '</span>]</strong></p>';
 	var html = head + result.join('</td></tr>\n<tr><td>') + tail;
 	//var end = new Date();	// Benchmark
 	//console.log(end.getTime() - deb.getTime(), 'ms');	// Benchmark
@@ -851,6 +866,9 @@ function listFuncs(editor) {
  * @returns {String} html - Formated HTML table
  */
 function listVars(editor) {
+	// Record current line number to later return on it
+	var curLine = editor.getCursor().line + 1;
+	// Make an array of lines with editor content
 	var lines = editor.getValue().split('\n');
 	var result = [];
 	// Compile RegExp only once
@@ -869,32 +887,144 @@ function listVars(editor) {
 		var isFn = (lines[lnum].indexOf('function') > -1) ? '{Handler} Refer to list of functions...':'???';
 		if (mv) {
 			//console.log('var', mv[1]);	// DBG
-			var mt = lines[lnum - 1].match(typePatt);
+			var mt = lines[lnum - 1] ? lines[lnum - 1].match(typePatt) : null;
 			result.push('<span class="lnum">' + (lnum + 1) + '</span></td><td>' + mv[1] + '</td><td>' + (mt ? mt[1]:isFn));
 			count++;
 		}
 	} // end for
 	var head = '<h1>Global Variables</h1>\n<table><tbody>\n<tr><th>Line</th><th>Name</th><th>Type</th></tr>\n<tr><td>';
-	var tail = '</td></tr>\n</tbody>\n<caption><em>&mdash;&nbsp;Found ' + count + ' variables&nbsp;&mdash;</em></caption></table>\n<p><strong>Back to editor at line [<span class="lnum">1</span>]</strong></p>';
+	var tail = '</td></tr>\n</tbody>\n<caption><em>&mdash;&nbsp;Found ' + count + ' variables&nbsp;&mdash;</em></caption></table>\n<p><strong>Back to editor at line [<span class="lnum">' + curLine + '</span>]</strong></p>';
 	var html = head + result.join('</td></tr>\n<tr><td>') + tail;
 	return html;
 } // end Vars()
+
+/**
+ * Jump to a given line, stay inside editor bounds and center display
+ */
+function gotoLine() {
+	editor.openDialog('<input type="text" value="default">Line number</input>', 
+		function (str) {
+			var numLine = parseInt(str, 10);
+			//console.log('Line:', str, numLine, isNaN(numLine));	// DBG
+			if (isNaN(numLine)) {return; }	// Not a Number
+			if (numLine > editor.lineCount()) {numLine = editor.lineCount(); } // Above range
+			if (numLine < 1) {numLine = 1; } // Under range
+			numLine--;	// Get zero based index
+			editor.scrollIntoView(numLine, editor.getScrollInfo().clientHeight / 2);
+			// Put cursor at beginning of target line
+			editor.setCursor({line: numLine, ch: 0});
+		}
+	);
+}
+
+// -----------------------------
+// Popup Javascript subMenu
+// -----------------------------
+/** @global */
+/** {Instance} Create Javascript dedicated popup sub-menu */
+var submenuJavascript = new gui.Menu();
+submenuJavascript.append(new gui.MenuItem({
+	label: 'List Funcs',
+	click: function () {
+		$('#output').html(listFuncs(editor));
+		$('#output').show();
+		$('.lnum').click(function () {
+			var numLine = $(this).text() - 1;
+			//console.log('lnum:', numLine);	// DBG
+			$('#output').hide();
+			editor.scrollIntoView(numLine, editor.getScrollInfo().clientHeight / 2);
+			// Put cursor at beginning of function
+			editor.setCursor({line: numLine, ch: 0});
+			// Show the editor page
+			editor.focus();
+		});
+	}
+}));
+submenuJavascript.append(new gui.MenuItem({
+	label: 'List Vars',
+	click: function () {
+		$('#output').html(listVars(editor));
+		$('#output').show();
+		$('.lnum').click(function () {
+			var numLine = $(this).text() - 1;
+			//console.log('lnum:', numLine);	// DBG
+			$('#output').hide();
+			editor.scrollIntoView(numLine, editor.getScrollInfo().clientHeight / 2);
+			// Put cursor at beginning of function
+			editor.setCursor({line: numLine, ch: 0});
+			// Show the editor page
+			editor.focus();
+		});
+	}
+}));
+
+// -----------------------------
+// Popup Markdown subMenu
+// -----------------------------
+/** @global */
+/** {Instance} Create Markdown dedicated popup sub-menu */
+var submenuMarkdown = new gui.Menu();
+submenuMarkdown.append(new gui.MenuItem({
+	label: 'Cite block of lines',
+	click: function () {editor.options.extraKeys['Cmd-Alt-J'](editor); }
+}));
+submenuMarkdown.append(new gui.MenuItem({
+	label: 'Numbered list',
+	click: function () {editor.options.extraKeys['Cmd-Alt-L'](editor); }
+}));
+submenuMarkdown.append(new gui.MenuItem({
+	label: 'Toggle Overwrite',
+	click: function () {editor.options.extraKeys['Cmd-Alt-O'](editor); }
+}));
+submenuMarkdown.append(new gui.MenuItem({
+	label: 'Bold',
+	click: function () {editor.options.extraKeys['Cmd-B'](editor); }
+}));
+submenuMarkdown.append(new gui.MenuItem({
+	label: 'Italic',
+	click: function () {editor.options.extraKeys['Cmd-I'](editor); }
+}));
+submenuMarkdown.append(new gui.MenuItem({
+	label: 'Code',
+	click: function () {editor.options.extraKeys['Cmd-J'](editor); }
+}));
+submenuMarkdown.append(new gui.MenuItem({
+	label: 'Web link',
+	click: function () {editor.options.extraKeys['Cmd-K'](editor); }
+}));
+submenuMarkdown.append(new gui.MenuItem({
+	label: 'Bullet list',
+	click: function () {editor.options.extraKeys['Cmd-L'](editor); }
+}));
+submenuMarkdown.append(new gui.MenuItem({
+	label: 'Underlined',
+	click: function () {editor.options.extraKeys['Cmd-U'](editor); }
+}));
+
+// -----------------------------
+// Set empty content by default
+// -----------------------------
+/** @global */
+/** {Instance} Create popup menu item holding dedicated sub-menu */
+var extItem = new gui.MenuItem({type: 'normal', label: 'No Extensions'});
 
 // -----------------------------
 // Popup context menu
 // -----------------------------
 /**
  * Create GUI context menu<br>
- * Called by: onload even handler<br>
+ * Called by: win.on 'loaded' webkit App event<br>
  */
 function initContextMenu() {
 	menu = new gui.Menu();
+	// menu.items[0]
 	menu.append(new gui.MenuItem({
 		label: 'Copy',
 		click: function () {
 			clipboard.set(editor.getSelection());
 		}
 	}));
+	// menu.items[1]
 	menu.append(new gui.MenuItem({
 		label: 'Cut',
 		click: function () {
@@ -902,62 +1032,41 @@ function initContextMenu() {
 			editor.replaceSelection('');
 		}
 	}));
+	// menu.items[2]
 	menu.append(new gui.MenuItem({
 		label: 'Paste',
 		click: function () {
 			editor.replaceSelection(clipboard.get());
 		}
 	}));
+	// menu.items[3]
+	// No possible keyboard shortcut
+	// Cmd-J, Cmd-G, etc... are already defined
+	menu.append(new gui.MenuItem({
+		label: 'Goto Line',
+		click: gotoLine
+	}));
+	// menu.items[4]
 	menu.append(new gui.MenuItem({ type: 'separator' }));
-	menu.append(new gui.MenuItem({
-		label: 'List Funcs',
-		click: function () {
-			$('#output').html(listFuncs(editor));
-			$('#output').show();
-			$('.lnum').click(function () {
-				var numLine = $(this).text() - 1;
-				//console.log('lnum:', numLine);	// DBG
-				$('#output').hide();
-				editor.scrollIntoView(numLine, editor.getScrollInfo().clientHeight / 2);
-				// Put cursor at beginning of function
-				editor.setCursor({line: numLine, ch: 0});
-				// Show the editor page
-				editor.focus();
-			});
+	// menu.items[5]
+	menu.append(extItem);	// Set submenu
+
+   /**
+	* Display context menu on mouse right-button<br>
+	* Called by: mouse event<br>
+	*/
+	document.getElementById('editor').addEventListener('contextmenu',
+		function (ev) {
+			ev.preventDefault();
+			menu.popup(ev.x, ev.y);
+			return false;
 		}
-	}));
-	menu.append(new gui.MenuItem({
-		label: 'List Vars',
-		click: function () {
-			$('#output').html(listVars(editor));
-			$('#output').show();
-			$('.lnum').click(function () {
-				var numLine = $(this).text() - 1;
-				//console.log('lnum:', numLine);	// DBG
-				$('#output').hide();
-				editor.scrollIntoView(numLine, editor.getScrollInfo().clientHeight / 2);
-				// Put cursor at beginning of function
-				editor.setCursor({line: numLine, ch: 0});
-				// Show the editor page
-				editor.focus();
-			});
-		}
-	}));
-/**
- * Display context menu on mouse right-button<br>
- * Called by: mouse event<br>
- */
-document.getElementById('editor').addEventListener('contextmenu',
-	function (ev) {
-		ev.preventDefault();
-		menu.popup(ev.x, ev.y);
-		return false;
-	});
+	);
 }
 
 /**
- * Save nodEdit context in JSON file on leaving application<br>
- * Called by: onbeforeunload event<br>
+ * Save nodEdit context in JSON file on application exit<br>
+ * Called by: win.on 'close' event<br>
  */
 function saveOnQuit() {
 	// Avoid tray duplication on reload
@@ -1023,8 +1132,8 @@ win.on('loaded', function () {
 		subMenu.items[1].enabled = false;
 	});
 
+	// References to DOM elements
 	outPage = $('#output');
-	initContextMenu();
 
 	newButton = document.getElementById('new');
 	openButton = document.getElementById('open');
@@ -1038,6 +1147,10 @@ win.on('loaded', function () {
 	runButton.addEventListener('click', handleRunButton);
 	viewButton.addEventListener('click', handleViewButton);
 
+	// Create popup context menu
+	initContextMenu();
+
+	// Register file chooser events
 	$('#saveFile').change(function (evt) {
 		onChosenFileToSave($(this).val());
 	});
@@ -1089,8 +1202,11 @@ win.on('loaded', function () {
 		});
 	}
 
-	// Configure highlight.pack to replace 'tab' by 4 spaces
-	// Refer to http://highlightjs.org/usage/
+   /**
+	* Configure highlight.pack to replace 'tab' by 4 spaces<br>
+	* Refer to http://highlightjs.org/usage/<br>
+	* @param {Object} hljs options
+	*/
 	hljs.configure({tabReplace: '    '});
 
    /**
@@ -1102,6 +1218,11 @@ win.on('loaded', function () {
 		CodeMirror.showHint(cm, CodeMirror.hint.anyword);
 	};
 
+   /**
+	* Create CodeMirror instance<br>
+	* @param {Element} DOM CodeMirror editor<br>
+	* @param {Object} options
+	*/
 	editor = new CodeMirror(
 		document.getElementById('editor'),
 		{
