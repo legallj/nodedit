@@ -5,7 +5,7 @@
 /* jshint shadow:true */
 /* jshint bitwise:false */
 
-'use strict';
+//'use strict';
 
 // NOTE: 'jshint' at https://github.com/gruntjs/grunt-contrib-jshint
 // Octal literals are not allowed in strict mode, convert them to dec.
@@ -691,7 +691,7 @@ function handleViewButton() {
 	case 'htmlmixed':
 		if (!new_win) {
 			// Open a separate window
-			// with(out) navigation bar
+			// with navigation bar
 			new_win = gui.Window.open('file://' + fileEntry, {
 				position: 'center',
 				toolbar: true,
@@ -700,9 +700,10 @@ function handleViewButton() {
 			});
 			// Put window aside
 			new_win.moveTo(150, 100);
-			// Register close event to remove reference
-			// TODO
-			// Fix bug when new_win is closed by hand
+			/**
+			* Register close event to remove reference
+			* TODO Fix bug when new_win is closed by hand
+			*/
 			new_win.on('closed', function () {
 				new_win = null;
 				console.log('new_win closed');	// DBG
@@ -728,11 +729,15 @@ function handleViewButton() {
 		// Render Markdown into 'output' page
 		// the editor content as Markdown
 		outPage.html(marked(editor.getValue()));
-		// Highlight code blocks
+		/**
+		* Highlight code blocks
+		*/
 		$('#output pre code').each(function (i, el) {
 			hljs.highlightBlock(el);
 		});
-		// Register Web links
+		/**
+		* Register Web links
+		*/
 		$('#output a').each(function (i, el) {
 			$(this).click(function (ev) {
 				ev.preventDefault();
@@ -797,6 +802,8 @@ function listFuncs(editor) {
 	//   editor.lineInfo(line) --> {line, handle, text, markerText, markerClass, lineClass, bgClass}
 	// Benchmark result:
 	//   Slower than direct method, then discarded
+	// Online 'regex' tester at:
+	//   http://regex101.com/
 
 	// Record current line number to later return on it
 	var curLine = editor.getCursor().line + 1;
@@ -804,11 +811,16 @@ function listFuncs(editor) {
 	// Make an array of lines with editor content
 	var lines = editor.getValue().split('\n');
 	var result = [];
+
 	// Compile RegExp only once
 	var funcPatt = /^\s*function\s+(\w+)/;
 	funcPatt.compile(funcPatt);
 	var handlePatt = /(\w+)\s+=\s+function/;
 	handlePatt.compile(handlePatt);
+	var callbackPatt = /(\w+)\(.*?function/;
+	callbackPatt.compile(callbackPatt);
+	var cmtoutPatt = /^[\s\t]*\/\//;
+	cmtoutPatt.compile(cmtoutPatt);
 
 	// Scan lines in array (10x faster than 'for in')
 	//console.log('listFuncs nb lines:', lines.length);
@@ -818,10 +830,15 @@ function listFuncs(editor) {
 		if (lines[lnum].length === 0) {
 			continue;
 		}
+		// Skip comment lines
+		if (cmtoutPatt.test(lines[lnum])) {
+			continue;
+		}
 		var mf = lines[lnum].match(funcPatt);
 		var mh = lines[lnum].match(handlePatt);
+		var mc = lines[lnum].match(callbackPatt);
 		// This method returns 'null' if no match is found.
-		if (mf || mh) {
+		if (mf || mh || mc) {
 			var cmt = [];
 			var mcmt = null;
 			// Search JSDoc comment in the 10 lines above declaration
@@ -844,6 +861,10 @@ function listFuncs(editor) {
 			else if (mf) {
 				// Callable function
 				result.push('<span class="lnum">' + (lnum + 1) + '</span></td><td>' + mf[1] + '</td><td>on Call</td><td>' + cmt.join(' '));
+			}
+			else if (mc) {
+				// Callback function
+				result.push('<span class="lnum">' + (lnum + 1) + '</span></td><td>' + mc[1] + '</td><td>Callback</td><td>' + cmt.join(' '));
 			}
 			count++;
 		}
@@ -902,7 +923,7 @@ function listVars(editor) {
  * Jump to a given line, stay inside editor bounds and center display
  */
 function gotoLine() {
-	editor.openDialog('<input type="text" value="default">Line number</input>', 
+	editor.openDialog('<input type="text" value="default">Line number</input>',
 		function (str) {
 			var numLine = parseInt(str, 10);
 			//console.log('Line:', str, numLine, isNaN(numLine));	// DBG
@@ -1084,6 +1105,67 @@ function saveOnQuit() {
 	//return false;
 }
 
+/**
+ * Edit file dropped into footer area (#holder)<br>
+ * Hold 'Alt' key to create a new 'README.md'
+ * default file in the dropped directory<br>
+ * Called by: holder.ondrop event<br>
+ * @param {Object} e - Event containing the full path of the target
+ */
+function editDropFile(e) {
+	e.preventDefault();
+	// Drop event contains Booleans:
+	// e.altKey, e.ctrlKey, e.metaKey and shiftKey
+	this.className = '';
+	// Display first file/folder dropped into 'holder' area
+	// NOTE: Drag & Drop returns the full path of the target
+	var file = e.dataTransfer.files[0].path;
+	var stats = fs.lstatSync(file);
+	var ext  = path.extname(file);
+	console.log('Drop:', file);	// DBG
+
+	//if (stats.isFile() && settings.doc_ext.indexOf(ext) >= 0) {
+	if (stats.isFile()) {
+		setFile(file, false);
+		readFileIntoEditor(file);
+	}
+	else if (stats.isDirectory()) {
+		if (e.altKey) {
+			// Create a new 'README.md' file in 'file' directory
+			// WARN: 'file' path is global and shall be updated
+			console.log('Alt+Drop event in:', file);	// DBG
+			var location = file;	// Base directory path
+			var newFile = 'README.md';	// Default file name
+			file = path.join(location, newFile);
+			if (fs.existsSync(file)) {
+				// You may want to choose another file name or edit its content
+				newFile = prompt('A note named "README.md"\nAlready exists in directory:\n' + location + '\nEdit its content or enter another file name', newFile);
+				if (!newFile) {
+					console.log('Cancel create file');	// DBG
+					return;
+				}
+				file = path.join(location, newFile);
+			}
+			console.log('Select file:', file);	// DBG
+			try {
+				if (!fs.existsSync(file)) {
+					// Create a new file
+					console.log('Create file:', file);	// DBG
+					fs.writeFileSync(file, '#Default Title\n' + (new Date().toISOString().substr(0, 10)) + '\n\n> Abstract\n\nMarkdown file **' + newFile + '** created in folder `' + location + '`\n');
+				}
+				// Read back the existing or new file
+				// and display it in the editor
+				console.log('Edit file:', file);	// DBG
+				setFile(file, false);
+				readFileIntoEditor(file);
+			}
+			catch (err) {
+				console.log(err.message);
+			}
+		}
+	}
+}	// end editDropFile
+
 // =============================
 //   INIT ON DOCUMENT LOADED
 // =============================
@@ -1102,12 +1184,14 @@ win.on('loaded', function () {
 	// Give a menu to the tray icon
 	tray.menu = subMenu;
 
-	// Try to register window close event to save settings as per:
+	/**
+	* Register window close event to save settings<br>
+	* window.onbeforeunload = saveOnQuit;<br>
+	* Use instead the specified webkit method
+	* to also respond to manual close window.
+	*/
+	// Refer to:
 	// http://stackoverflow.com/questions/13443503/how-to-run-javascript-code-on-window-close
-	//window.onbeforeunload = saveOnQuit;
-	// -------------------------
-	// Use instead the specified webkit method
-	// to also respond to manual close window
 	// https://github.com/rogerwang/node-webkit/wiki/Window
 	// -------------------------
 	win.on('close', function () {
@@ -1116,8 +1200,37 @@ win.on('loaded', function () {
 		this.close(true);
 	});
 
-	// Manage show/hide window command
-	// from tray menu or window button
+	// -------------------------
+	// Setup Drag & Drop area as per:
+	// https://github.com/rogerwang/node-webkit/wiki/Dragging-files-into-page
+	// -------------------------
+	// NOTE: 'event.returnValue' is deprecated.
+	/**
+	* Prevent default window.ondragover action
+	*/
+	window.ondragover = function (e) { e.preventDefault(); };
+	/**
+	* Prevent default window.ondrop action
+	*/
+	window.ondrop = function (e) { e.preventDefault(); };
+	var holder = document.getElementById('holder');
+	/**
+	* Highlight '#holder' area while 'ondragover'
+	*/
+	holder.ondragover = function () { this.className = 'hover'; };
+	/**
+	* Restore '#holder' style when 'ondragleave' occurs
+	*/
+	holder.ondragleave  = function () { this.className = ''; };
+	/**
+	* Handle drop event, call 'editDropFile(e)'
+	*/
+	holder.ondrop = editDropFile;	//function (e) {
+
+	/**
+	* Manage show/hide window command
+	* from tray menu or window button
+	*/
 	win.on('minimize', function () {
 		console.log('Minimize');	// DBG
 		subMenu.items[0].enabled = false;
@@ -1150,15 +1263,22 @@ win.on('loaded', function () {
 	// Create popup context menu
 	initContextMenu();
 
-	// Register file chooser events
+	/**
+	* Register file chooser 'save' event
+	*/
 	$('#saveFile').change(function (evt) {
 		onChosenFileToSave($(this).val());
 	});
+	/**
+	* Register file chooser 'open' event
+	*/
 	$('#openFile').change(function (evt) {
 		onChosenFileToOpen($(this).val());
 	});
 
-	// Register keyboard shortcuts on Mac OS-X
+	/**
+	* Register keyboard shortcuts on Mac OS-X
+	*/
 	// http://stackoverflow.com/questions/14919459/using-jquery-on-to-watch-for-enter-key-press
 	// -------------------------------------
 	// TODO:
@@ -1244,6 +1364,10 @@ win.on('loaded', function () {
 		}
 	);
 	$('#save').hide();
+
+	/**
+	* Register response to every 'change' event from editor
+	*/
 	editor.on('change', function (instance, changeObj) {
 		dirtyBit = true;
 		$('#save').show();
