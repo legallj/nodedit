@@ -190,8 +190,10 @@ subMenu.append(new gui.MenuItem({
 	label: 'Reload',
 	click: function () {
 		// Avoid tray duplication on reload
-		tray.remove();
-		tray = null;
+		if (tray) {
+			tray.remove();
+			tray = null;
+		}
 		win.reload();
 	}
 }));
@@ -329,7 +331,7 @@ function handleDocumentChange(title) {
 	mode = 'javascript';
 	var modeName = 'JavaScript';
 	runTime = '';
-	var lint = true;
+	var lint = false;
 	var theme = 'monokai';
 	if (title) {
 		console.log('title:', title);	// DBG
@@ -397,7 +399,16 @@ function handleDocumentChange(title) {
 			modeName = 'Shell';
 			theme = 'vibrant-ink';
 			runTime = '/usr/bin/env bash ';
-			$('button#run').show();
+			$('#run').show();
+			break;
+		case '.py':
+			mode = {name: "python",
+					version: 2,
+					singleLineStringErrors: false};
+			modeName = 'Python-2';
+			theme = 'vibrant-ink';
+			runTime = '/usr/bin/env python ';
+			$('#run').show();
 			break;
 		default :
 			mode = 'text/plain';
@@ -1091,8 +1102,10 @@ function initContextMenu() {
  */
 function saveOnQuit() {
 	// Avoid tray duplication on reload
-	tray.remove();
-	tray = null;
+	if (tray) {
+		tray.remove();
+		tray = null;
+	}
 	// Record last context
 	lastContext.file = fileEntry;
 	lastContext.cursor = editor.getCursor();
@@ -1130,7 +1143,8 @@ function editDropFile(e) {
 		readFileIntoEditor(file);
 	}
 	else if (stats.isDirectory()) {
-		if (e.altKey) {
+//		if (e.altKey) {	// Useless option key..!
+		if (true) {
 			// Create a new 'README.md' file in 'file' directory
 			// WARN: 'file' path is global and shall be updated
 			console.log('Alt+Drop event in:', file);	// DBG
@@ -1175,14 +1189,30 @@ function editDropFile(e) {
  * Called by: win.on 'loaded' webkit App even<br>
  */
 win.on('loaded', function () {
-	// Create tray menu
-	tray = new gui.Tray({
-		title: 'nodEdit',
-		icon: 'img/16x16/16.png',
-		alticon: 'img/16x16/16red.png'
-	});
-	// Give a menu to the tray icon
-	tray.menu = subMenu;
+	// Setup main menu
+	if (process.platform === 'darwin') {
+		// Create tray menu
+		tray = new gui.Tray({
+			title: 'nodEdit',
+			icon: 'img/16x16/16.png',
+			alticon: 'img/16x16/16red.png'
+		});
+		// Give a menu to the tray icon
+		tray.menu = subMenu;
+	}
+	else if (process.platform === 'linux') {
+		// Create a menu in the screen/window top bar
+		var winMenu = new gui.Menu({ 'type': 'menubar' });
+		// Add winMenu.items[0]
+		winMenu.append(new gui.MenuItem({
+			type: 'normal',
+			label: 'Options'
+		}));
+		// Add subMenu to the winMenu item 'Options'
+		winMenu.items[0].submenu = subMenu;
+		// Then display winMenu instead of trayMenu
+		gui.Window.get().menu = winMenu;
+	}
 
 	/**
 	* Register window close event to save settings<br>
@@ -1298,12 +1328,12 @@ win.on('loaded', function () {
 					case 12:
 						// [Ctrl-L]
 						// Reload browser page
-						tray.menu.items[3].click();
+						tray.menu.items[6].click();
 						break;
 					case 13:
 						// [Ctrl-ENTER]
 						// Toggle Debug Window
-						tray.menu.items[4].click();
+						tray.menu.items[3].click();
 						break;
 					case 14:
 						// [Ctrl-N]
