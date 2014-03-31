@@ -97,6 +97,17 @@ var runTime = '';
 /** {Reference} to secondary WebKit Chromium window */
 var new_win = null;
 
+/** @global */
+/** {Integer} number of space per tab stop */
+var tabWidth = 4;
+
+/** @global */
+/** {Array} List the ruler Objects to be displayed when mode is javascript */
+var rulers = [];
+for (var i = 1; i < 12; i++) {
+	rulers.push({className: 'rulers', column: (tabWidth * i)});
+}
+
 // -----------------------------------------
 // Create Editor menu
 // -----------------------------------------
@@ -344,6 +355,7 @@ function handleDocumentChange(title) {
 		extraKeys = defaultEditCmds;
 		menu.items[5].enabled = false;
 		lint = false;
+		editor.setOption('rulers', null);
 		// Test file extension
 		switch (path.extname(title)) {
 		case '.js':
@@ -354,6 +366,7 @@ function handleDocumentChange(title) {
 			extItem.submenu = submenuJavascript;
 			menu.items[5].enabled = true;
 			lint = true;
+			editor.setOption('rulers', rulers);
 			$('#run').show();
 			break;
 		case '.json':
@@ -402,7 +415,7 @@ function handleDocumentChange(title) {
 			$('#run').show();
 			break;
 		case '.py':
-			mode = {name: "python",
+			mode = {name: 'python',
 					version: 2,
 					singleLineStringErrors: false};
 			modeName = 'Python-2';
@@ -830,7 +843,7 @@ function listFuncs(editor) {
 	handlePatt.compile(handlePatt);
 	var callbackPatt = /(\w+)\(.*?function/;
 	callbackPatt.compile(callbackPatt);
-	var cmtoutPatt = /^[\s\t]*\/\//;
+	var cmtoutPatt = /^[\s\t]*(\/\/|\/\*|\*)/;
 	cmtoutPatt.compile(cmtoutPatt);
 
 	// Scan lines in array (10x faster than 'for in')
@@ -1247,11 +1260,13 @@ win.on('loaded', function () {
 	/**
 	* Highlight '#holder' area while 'ondragover'
 	*/
-	holder.ondragover = function () { this.className = 'hover'; };
+	holder.ondragover = function () { this.className = 'hover'; $('#open').addClass('animated rubberBand'); };
+	//holder.ondragover = function () { this.className = 'hover'; $('header').addClass('animated shake'); };
 	/**
 	* Restore '#holder' style when 'ondragleave' occurs
 	*/
-	holder.ondragleave  = function () { this.className = ''; };
+	holder.ondragleave  = function () { this.className = ''; $('#open').removeClass('animated rubberBand'); };
+	//holder.ondragleave  = function () { this.className = ''; $('header').removeClass('animated shake'); };
 	/**
 	* Handle drop event, call 'editDropFile(e)'
 	*/
@@ -1380,7 +1395,7 @@ win.on('loaded', function () {
 			mode: 'javascript',
 			lineNumbers: true,
 			styleSelectedText: true,
-			indentUnit: 4,
+			indentUnit: tabWidth,
 			indentWithTabs: true,
 			lineWrapping: true,
 			matchBrackets: true,
@@ -1390,10 +1405,19 @@ win.on('loaded', function () {
 			theme: 'monokai',
 			gutters: ['CodeMirror-lint-markers'],
 			lint: true,
+			rulers: null,
 			extraKeys: extraKeys
 		}
 	);
 	$('#save').hide();
+	
+	/**
+	* Register click in gutter to select the entire line(s) from last cursor position
+	*/
+	editor.on('gutterClick', function (cm, n) {
+		console.log('gutter click', cm.getCursor().line, n);	// DBG
+		cm.setSelection({line: cm.getCursor().line, ch: 0}, {line: n + 1, ch: 0});
+	});
 
 	/**
 	* Register response to every 'change' event from editor
@@ -1407,7 +1431,7 @@ win.on('loaded', function () {
 	onresize();
 
 	// Front page system information complement
-	outPage.append('<pre>CodeMirror-3.22 running node-webkit ' + process.version + ' under ' + process.platform + '\nOpen or create a new file...\n</pre>');
+	outPage.append('<pre>CodeMirror v' + CodeMirror.version + ' running node-webkit ' + process.version + ' under ' + process.platform + '\nOpen or create a new file...\n</pre>');
 	outPage.show();
 
 	// -------------------------
