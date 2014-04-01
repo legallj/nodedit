@@ -9,7 +9,7 @@
 
 // NOTE: 'jshint' at https://github.com/gruntjs/grunt-contrib-jshint
 // Octal literals are not allowed in strict mode, convert them to dec.
-// Take '<workspace>/.jshintrc' into account then file options ✔
+// Take '<workspace>/.jshintrc' into account then file options 
 
 /**
  * @fileOverview WebApp developped under node-webkit to edit, preview and execute files<br>
@@ -41,6 +41,12 @@ var marked = require('marked');
 /** @global */
 /** {Module} Node Webkit embedded GUI instance */
 var gui = require('nw.gui');
+
+/** @global */
+/** {Module} Node mime type lookup functions */
+var mime = require('mime');
+// Set instead of mime default 'application/octet-stream'
+mime.default_type = 'text/plain';
 
 // -----------------------------
 // GLOBAL VARIABLES
@@ -107,6 +113,18 @@ var rulers = [];
 for (var i = 1; i < 12; i++) {
 	rulers.push({className: 'rulers', column: (tabWidth * i)});
 }
+
+// -----------------------------------------
+// Catch the uncaught errors that weren't
+// wrapped in a domain or try catch statement.
+// Do not use this in modules, but only in
+// applications, as otherwise we could have
+// multiple of these bound.
+// -----------------------------------------
+process.on('uncaughtException', function (err) {
+    // handle the error safely
+    console.log('Uncaught error', err);
+});
 
 // -----------------------------------------
 // Create Editor menu
@@ -231,7 +249,9 @@ var tray = null;
 
 // -----------------------------------------
 // Capture Cmd-Q to prevent OS-X kill process<br>
-// The editor must have focus to respond
+// The editor must have focus to respond.
+// Under Mac OS-X standard clipboard commands
+// are ignored then they shall be restored..!
 // -----------------------------------------
 /** @global */
 /** {Object} Default editor keyboard shortcuts */
@@ -249,7 +269,15 @@ var defaultEditCmds = {
 		},
 	'Shift-Cmd-S': function (cm) {handleSaveButton(); },
 	'Cmd-Alt-O': function (cm) {cm.toggleOverwrite(); },
-	'Ctrl-Space': 'autocomplete'
+	'Cmd-D': 'goPageDown',
+	'Cmd-U': 'goPageUp',
+	'Ctrl-Space': 'autocomplete',
+	'Ctrl-U': 'deleteLine',
+	'Ctrl-T': 'toggleComment',
+// 	'Ctrl-T': function (cm) {
+// 			if (cm.getTokenAt(cm.getCursor()).type !== 'comment') cm.execCommand('toggleComment');
+// 		},
+	'Enter': 'newlineAndIndentContinueComment'
 };
 
 // -----------------------------------------
@@ -333,31 +361,36 @@ var markdownEditCmds = {
 // -----------------------------
 /**
  * Configure the editor according to doc-type<br>
- * @param {String} title - Full path of the target file
+ * @param {String} filePath - Full path of the target file
  */
-function handleDocumentChange(title) {
+function handleDocumentChange(filePath) {
 	$('#run').hide();
 	$('#view').hide();
 	// Default 'js' edit parameters
-	mode = 'javascript';
-	var modeName = 'JavaScript';
+	mode = 'text/plain';
+	var modeName = 'Plain text';
 	runTime = '';
 	var lint = false;
-	var theme = 'monokai';
-	if (title) {
-		console.log('title:', title);	// DBG
+	var theme = 'default';
+	if (filePath) {
+		// https://www.npmjs.org/package/mime
+		// Not yet used..!
+		var mimeType = mime.lookup(filePath);
+		console.log('filePath/mime:', filePath, mimeType);	// DBG
 		// Hide output page if displayed
 		outPage.hide();
 		// Get file name without its leading path (basename)
-		title = path.basename(title);
+		var title = path.basename(filePath);
 		document.getElementById('title').innerHTML = title;
 		document.title = title;
+		var ext = path.extname(filePath);
+		var dir = path.dirname(filePath);
 		extraKeys = defaultEditCmds;
 		menu.items[5].enabled = false;
 		lint = false;
 		editor.setOption('rulers', null);
-		// Test file extension
-		switch (path.extname(title)) {
+		// Test file extension (including leading dot)
+		switch (ext) {
 		case '.js':
 			mode = 'javascript';
 			modeName = 'JavaScript';
@@ -377,7 +410,8 @@ function handleDocumentChange(title) {
 			mode = 'htmlmixed';
 			modeName = 'HTML';
 			lint = false;
-			theme = 'default';
+			//theme = 'monokai';
+			theme = 'vibrant-ink';
 			editor.setOption('autoCloseTags', true);
 			// Define Emmet output profile
 			editor.setOption('profile', 'xhtml');
@@ -421,6 +455,41 @@ function handleDocumentChange(title) {
 			modeName = 'Python-2';
 			theme = 'vibrant-ink';
 			runTime = '/usr/bin/env python ';
+			editor.setOption('rulers', rulers);
+			$('#run').show();
+			break;
+		case '.c':
+			// WARNING
+			// 'clike' is not a recognized mode..!
+			mode = 'text/x-c';
+			modeName = 'C';
+			theme = 'vibrant-ink';
+			editor.setOption('rulers', rulers);
+			var fileExec = path.join(dir, path.basename(filePath, ext)); // Remove extension
+			runTime = 'gcc --std=c99 -Wall -o ' + fileExec + ' ' + filePath + ' && ' + fileExec;
+			console.log('Run fileExec:', fileExec);
+			$('#run').show();
+			break;
+		case '.cpp':
+			mode = 'text/x-c++src';
+			modeName = 'CPP';
+			theme = 'vibrant-ink';
+			editor.setOption('rulers', rulers);
+			var fileExec = path.join(dir, path.basename(filePath, ext)); // Remove extension
+			runTime = 'g++ -Wall -o ' + fileExec + ' ' + filePath + ' && ' + fileExec;
+			console.log('Run fileExec:', fileExec);
+			$('#run').show();
+			break;
+		case '.java':
+			// WARNING
+			// 'clike' is not a recognized mode..!
+			mode = 'text/x-java';
+			modeName = 'Java';
+			theme = 'vibrant-ink';
+			editor.setOption('rulers', rulers);
+			var fileClass = path.basename(filePath, ext);
+			runTime = 'javac ' + filePath + ' && java -cp ' + dir + ' ' + fileClass;
+			console.log('Run fileClass:', runTime);
 			$('#run').show();
 			break;
 		default :
@@ -436,6 +505,7 @@ function handleDocumentChange(title) {
 		modeName = 'Plain text';
 		theme = 'default';
 		lint = false;
+		editor.setOption('rulers', null);
 	} // end if
 	console.log('Found doc type:', mode);	// DBG
 	extItem.label = modeName;
@@ -458,9 +528,10 @@ function handleDocumentChange(title) {
  * Make call: handleDocumentChange()
  */
 function newFile() {
+	console.log('Open new file');	// DBG
 	fileEntry = null;
 	hasWriteAccess = true;
-	handleDocumentChange(null);
+	handleDocumentChange('');
 }
 /**
  * Helper: set var fileEntry, hasWriteAccess<br>
@@ -880,7 +951,7 @@ function listFuncs(editor) {
 			if (mh) {
 				// Handler function
 				result.push('<span class="lnum">' + (lnum + 1) + '</span></td><td><em>' + mh[1] + '</em></td><td><em>on Event</em></td><td>' + cmt.join(' '));
-				//editor.setMarker(lnum, '●%N%');	// Seems not implemented in CodeMirror-3..!
+				//editor.setMarker(lnum, '%N%');	// Seems not implemented in CodeMirror-3..!
 			}
 			else if (mf) {
 				// Callable function
@@ -1193,6 +1264,70 @@ function editDropFile(e) {
 	}
 }	// end editDropFile
 
+/**
+ * Auto fill Javascript and C-Like on typing keywords.<br>
+ * Type ahead is triggered only if the token is recognized by CodeMirror.
+ * @param {Instance} cm - Code Mirror instance
+ * @param {Object} changeObj - gives {from, to, text, next} data
+ */
+function autoFill(cm, changeObj) {
+	if (mode !== 'javascript' && mode !== 'text/x-c' && mode !== 'text/x-java') {return; }
+	//console.log('Editor change event', changeObj, cm.getTokenAt(cm.getCursor()));	// DBG
+	// -----------------------------
+	// Auto-fill Javascript keywords
+	// -----------------------------
+	var pos = cm.getCursor();
+	var token = cm.getTokenAt(pos);
+	if (token.type === 'keyword') {
+		//console.log('Token:', token.string);	// DBG
+		switch (token.string) {
+		case 'if':
+		case 'while':
+			cm.replaceRange(' () {\n// Then...\n}', pos);
+			cm.indentLine(pos.line + 1);
+			cm.indentLine(pos.line + 2);
+			cm.setCursor({line: pos.line, ch: pos.ch + 2});
+			break;
+		case 'else':
+			cm.replaceRange(' {\n// Otherwise...\n}', pos);
+			cm.indentLine(pos.line + 1);
+			cm.indentLine(pos.line + 2);
+			cm.setCursor({line: pos.line + 1, ch: 999});
+			break;
+		case 'for':
+			cm.replaceRange(' (;;) {\n// Action...\n}', pos);
+			cm.indentLine(pos.line + 1);
+			cm.indentLine(pos.line + 2);
+			cm.setCursor({line: pos.line, ch: pos.ch + 2});
+			break;
+		case 'switch':
+			cm.replaceRange(' () {\ncase :\n// Do...\nbreak;\ndefault:\n// Otherwise...\n}', pos);
+			cm.indentLine(pos.line + 1);
+			cm.indentLine(pos.line + 2);
+			cm.indentLine(pos.line + 3);
+			cm.indentLine(pos.line + 4);
+			cm.indentLine(pos.line + 5);
+			cm.setCursor({line: pos.line, ch: pos.ch + 2});
+			break;
+		case 'function':
+			cm.replaceRange(' NAME() {\n// Body...\n}', pos);
+			cm.indentLine(pos.line + 1);
+			cm.indentLine(pos.line + 2);
+			cm.setSelection({line: pos.line, ch: pos.ch + 1}, {line: pos.line, ch: pos.ch + 5});
+			cm.replaceRange('/**\n * Doc string @param @returns...\n */\n', {line: pos.line, ch: 0});
+			break;
+		case 'do':
+			cm.replaceRange(' {\n// Action...\n} while ();', pos);
+			cm.indentLine(pos.line + 1);
+			cm.indentLine(pos.line + 2);
+			cm.setCursor({line: pos.line + 2, ch: cm.lineInfo(pos.line + 2).text.length - 2});
+			break;
+		default:
+			console.log('Ignored');
+		}
+	}
+}
+
 // =============================
 //   INIT ON DOCUMENT LOADED
 // =============================
@@ -1332,7 +1467,7 @@ win.on('loaded', function () {
 	// window.close() is correctly executed
 	if (process.platform === 'darwin') {
 		$(document).keypress(function (event) {
-			console.log('Keyboard event:', event.keyCode, event.ctrlKey);	// DBG
+			console.log('Keyboard event keyCode/ctrlKey:', event.keyCode, event.ctrlKey);	// DBG
 			if (event.ctrlKey) {
 				switch (event.keyCode) {
 					case 0:
@@ -1422,10 +1557,10 @@ win.on('loaded', function () {
 	/**
 	* Register response to every 'change' event from editor
 	*/
-	editor.on('change', function (instance, changeObj) {
+	editor.on('change', function (cm, changeObj) {
 		dirtyBit = true;
 		$('#save').show();
-		//console.log('Editor change event');
+		autoFill(cm, changeObj);
 	});
 	newFile();
 	onresize();

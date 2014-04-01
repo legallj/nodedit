@@ -1,4 +1,4 @@
-/** HELPER
+/** HELPER TOOL
  * Refer to the Color Picker:
  * http://www.w3schools.com/tags/ref_colorpicker.asp
  * A powerful Photoshop-like CSS gradient editor:
@@ -124,7 +124,7 @@ header {
 #editor {
 	position: absolute;
 	top: 44px;
-	bottom: 30px;
+	bottom: 31px;
 	left: 0;
 	right: 0;
 	background: #262626;
@@ -177,11 +177,12 @@ footer {
 	right: 0;
 	text-align: center;
 	padding-top: 7px;
-	height: 21px;
+	height: 22px;
 	background: maroon;
 	font-style: normal;
-	font-size: 10px;
-	padding-top: 10px;
+	font-size: 12px;
+	padding-top: 7px;
+	border-top: 2px groove #aaa;
 	color: #ffc;
 	box-shadow: none;
 	z-index: 5;
