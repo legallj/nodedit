@@ -20,13 +20,13 @@ body {
 	overflow: hidden;
 }
 
-/*h1 { text-shadow: 3px 3px 8px #aaa; }*/
 h1 {
 	font-family: 'Roboto', sans-serif;
 	font-weight: 100;
 	font-size: 60px;
 	color: maroon;
 	text-shadow: 4px 4px 4px #aaa;
+	text-align: center;
 }
 
 a {
@@ -144,6 +144,26 @@ caption {
 	padding: 15px;
 }
 
+/*
+ * Open title fX on load
+ */
+.animated {
+	-webkit-animation-duration: 1s;
+	-webkit-animation-fill-mode: both;
+}
+
+@-webkit-keyframes rubberBand {
+	0% { -webkit-transform: scale(1); }
+	30% { -webkit-transform: scaleX(1.25) scaleY(0.75); }
+	40% { -webkit-transform: scaleX(0.75) scaleY(1.25); }
+	60% { -webkit-transform: scaleX(1.15) scaleY(0.85); }
+	100% { -webkit-transform: scale(1); }
+}
+
+.rubberBand {
+	-webkit-animation-name: rubberBand;
+}
+
 </style>
 </head>
 <body>
@@ -152,7 +172,7 @@ caption {
 
 <div id="output">
 <!-- FRONT PAGE -->
-<h1>nodEdit &mdash; Minimal IDE</h1>
+<h1 class='animated rubberBand'>nodEdit &mdash; Minimal IDE</h1>
 
 <p>2014-03-31</p>
 
@@ -181,7 +201,7 @@ This simple tool implements the read - execute - print - loop (REPL) paradigme u
 	<tr><th>Key stroke</th><th>&rarr; Actions only available from Front-Page</th></tr>
 	<tr>
 		<td>Ctrl-SPACE</td>
-		<td>&rarr; Recall last context</td>
+		<td>&rarr; Recall last editor context</td>
 	</tr>
 	<tr>
 		<td>Ctrl-ENTER</td>
@@ -193,7 +213,7 @@ This simple tool implements the read - execute - print - loop (REPL) paradigme u
 	</tr>
 	<tr>
 		<td>Ctrl-N</td>
-		<td>&rarr; Create a new document (text/plain)</td>
+		<td>&rarr; Create a new document as text/plain</td>
 	</tr>
 	<tr>
 		<td>Ctrl-L</td>
@@ -201,7 +221,7 @@ This simple tool implements the read - execute - print - loop (REPL) paradigme u
 	</tr>
 </table>
 
-<h3>General Editor-Page commands:</h3>
+<h3><span style='text-decoration: underline;'>General</span> Editor-Page commands:</h3>
 
 <p>Text edit commands:</p>
 
@@ -210,10 +230,8 @@ This simple tool implements the read - execute - print - loop (REPL) paradigme u
 	<li>&#8220;Cmd-X&#8221;: &#8220;Cut&#8221;,</li>
 	<li>&#8220;Cmd-V&#8221;: &#8220;Paste&#8221;,</li>
 	<li>&#8220;Cmd-A&#8221;: &#8220;selectAll&#8221;,</li>
-	<li>&#8220;Cmd-D&#8221;: &#8220;deleteLine&#8221;,</li>
 	<li>&#8220;Cmd-Z&#8221;: &#8220;Undo&#8221;,</li>
 	<li>&#8220;Shift-Cmd-Z&#8221;: &#8220;Redo&#8221;,</li>
-	<li>&#8220;Cmd-Y&#8221;: &#8220;Redo&#8221; (yank),</li>
 	<li>&#8220;Cmd-Alt-O&#8221;: &#8220;Toggle overwrite mode&#8221;,</li>
 	<li>&#8220;Ctrl-T&#8221;: &#8220;Toggle comment line(s)&#8221;,</li>
 	<li>&#8220;Ctrl-Space&#8221;: &#8220;autocomplete&#8221; (agnostic)</li>
@@ -231,8 +249,8 @@ This simple tool implements the read - execute - print - loop (REPL) paradigme u
 	<li>&#8220;Cmd-D&#8221;: &#8220;Scroll Down (or PageDown key)&#8221;,</li>
 	<li>&#8220;Alt-Left&#8221;: &#8220;goWordLeft&#8221;,</li>
 	<li>&#8220;Alt-Right&#8221;: &#8220;goWordRight&#8221;,</li>
-	<li>&#8220;Cmd-Left&#8221;: &#8220;goLineStart&#8221;,</li>
-	<li>&#8220;Cmd-Right&#8221;: &#8220;goLineEnd&#8221;,</li>
+	<li>&#8220;Cmd-Left&#8221;: &#8220;goLineStart&#8221; (or Ctrl-A),</li>
+	<li>&#8220;Cmd-Right&#8221;: &#8220;goLineEnd&#8221; (or Ctrl-E)</li>
 </ul>
 
 <p>Delete:</p>
@@ -241,8 +259,8 @@ This simple tool implements the read - execute - print - loop (REPL) paradigme u
 	<li>&#8220;Alt-Backspace&#8221;: &#8220;delWordBefore&#8221;,</li>
 	<li>&#8220;Ctrl-Alt-Backspace&#8221;: &#8220;delWordAfter&#8221;,</li>
 	<li>&#8220;Alt-Delete&#8221;: &#8220;delWordAfter&#8221;,</li>
-	<li>&#8220;Ctrl-U&#8221;: &#8220;delete entire line&#8221;,</li>
-	<li>&#8220;Ctrl-K&#8221;: &#8220;delete to the end of line&#8221;,</li>
+	<li>&#8220;Ctrl-U&#8221;: &#8220;delete from beginning of line to cursor&#8221;,</li>
+	<li>&#8220;Ctrl-K&#8221;: &#8220;delete from cursor to the end of line&#8221;,</li>
 </ul>
 
 <p>File commands:</p>
@@ -264,23 +282,28 @@ This simple tool implements the read - execute - print - loop (REPL) paradigme u
 	<li>&#8220;Shift-Cmd-Alt-F&#8221;: &#8220;replaceAll&#8221;,</li>
 </ul>
 
-<p>Indent line(s):</p>
+<p>Indent line(s) of code:</p>
 
 <ul>
-	<li>&#8220;Cmd-[&#8221;: &#8220;indentLess&#8221;,</li>
-	<li>&#8220;Cmd-]&#8221;: &#8220;indentMore&#8221;</li>
+	<li>&#8220;Tab&#8221;: &#8220;indentMore&#8221;</li>
+	<li>&#8220;Shift-Tab&#8221;: &#8220;indentLess&#8221;,</li>
 </ul>
 
-<p>Or more simply use <code>Tab</code> key&hellip;</p>
+<h3>Function specific to <span style='text-decoration: underline;'>C-like</span> modes</h3>
 
-<h3>HTML specific <em>Emmet</em> (formerly <em>Zen Coding</em>) command:</h3>
+<p>When in either Javascript, java or C modes<br>
+implements <strong>type-ahead</strong> feature on entering 
+<em>if, then, else, switch, for, while</em> and <em>do-while</em> keywords.</p>
+
+<h3><span style='text-decoration: underline;'>HTML</span> specific <em>Emmet</em> command:</h3>
+<p>Formerly known as <em>Zen Coding</em> abbreviate language.</p>
 
 <ul>
 	<li>&#8220;Cmd-E&#8221;: &#8220;Expand abbreviate&#8221;,</li>
-	<li>&#8220;Tab&#8221;: &#8220;Same expand abbrev function&#8221;</li>
+	<li>&#8220;Tab&#8221;: &#8220;Expand abbrev&#8221; as Cmd-E does</li>
 </ul>
 
-<h3>Markdown dedicated formatting commands</h3>
+<h3><span style='text-decoration: underline;'>Markdown</span> dedicated formatting commands</h3>
 
 <ul>
 	<li>&#8220;Cmd-B&#8221;: &#8220;Bold&#8221;,</li>

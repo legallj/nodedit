@@ -1348,8 +1348,9 @@ win.on('loaded', function () {
 		// Give a menu to the tray icon
 		tray.menu = subMenu;
 	}
-	else if (process.platform === 'linux') {
+	else if (process.platform === 'linux' && !gui.Window.get().menu) {
 		// Create a menu in the screen/window top bar
+		// Prevent menu duplication on window 'reload'
 		var winMenu = new gui.Menu({ 'type': 'menubar' });
 		// Add winMenu.items[0]
 		winMenu.append(new gui.MenuItem({
