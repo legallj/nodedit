@@ -1,4 +1,4 @@
-/** HELPER
+/** HELPER TOOL
  * Refer to the Color Picker:
  * http://www.w3schools.com/tags/ref_colorpicker.asp
  * A powerful Photoshop-like CSS gradient editor:
@@ -124,7 +124,7 @@ header {
 #editor {
 	position: absolute;
 	top: 44px;
-	bottom: 27px;
+	bottom: 31px;
 	left: 0;
 	right: 0;
 	background: #262626;
@@ -151,7 +151,7 @@ header {
 	font-size: 13px;
 	white-space: pre-wrap;
 }
-
+/*
 footer {
 	font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
 	font-size: 13px;
@@ -166,9 +166,35 @@ footer {
 	right: 0;
 	text-align: center;
 }
-
+*/
+footer {
+	font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+	font-size: 13px;
+	white-space: nowrap;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	text-align: center;
+	padding-top: 7px;
+	height: 22px;
+	background: maroon;
+	font-style: normal;
+	font-size: 12px;
+	padding-top: 7px;
+	border-top: 2px groove #aaa;
+	color: #ffc;
+	box-shadow: none;
+	z-index: 5;
+}
+footer.hover {
+	background-color: #888;
+	box-shadow: inset 0 3px 10px #000;
+	font-size: 16px;
+	padding-top: 24px;
+	height: 50px;
+}
 footer label {
-/*  font-weight: bold; */
 	color: #ccc;
 }
 
@@ -210,4 +236,162 @@ th {
 caption {
 	caption-side: top;
 	padding: 15px;
+}
+
+/**
+ * Rulers and tabs
+ */
+#editor .rulers { border-left: 1px dashed #334;}
+#editor .cm-tab { border-bottom: 1px solid #337;}
+/* RED ARROW - DISCARDED
+#editor .cm-tab { border-bottom: 1px solid #337;}
+#editor .cm-tab:before {
+  content: "➤";
+  color: #586e75;
+  position:absolute;
+}
+#editor .cm-tab { 	background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAgAAAASCAYAAABmQp92AAAAYklEQVQoz2NgGARgDgP3HCDmxKdgHhAvBGJ+XAp6gfg/lC7CpmAaVAEMHwBiRWQF19AUgPA3IA6HKXiPQwGYzYBFEqZgH9h3OBQgvI4k+AGKQ9B9cRCIDwNxGorriQ5J2gMARw9Os5lsuhEAAAAASUVORK5CYII=);
+	background-position: left;
+	background-repeat: no-repeat;
+}
+*/
+
+/*
+ * ------ ANIMATED -------
+ * http://daneden.github.io/animate.css/
+ * Only -webkit prefix is necessary
+ */
+
+.animated {
+  -webkit-animation-duration: 1s;
+  animation-duration: 1s;
+  -webkit-animation-fill-mode: both;
+  animation-fill-mode: both;
+}
+
+/*
+ * Open button fX on Drag & Drop file
+ */
+@-webkit-keyframes rubberBand {
+  0% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+
+  30% {
+    -webkit-transform: scaleX(1.25) scaleY(0.75);
+    transform: scaleX(1.25) scaleY(0.75);
+  }
+
+  40% {
+    -webkit-transform: scaleX(0.75) scaleY(1.25);
+    transform: scaleX(0.75) scaleY(1.25);
+  }
+
+  60% {
+    -webkit-transform: scaleX(1.15) scaleY(0.85);
+    transform: scaleX(1.15) scaleY(0.85);
+  }
+
+  100% {
+    -webkit-transform: scale(1);
+    transform: scale(1);
+  }
+}
+
+.rubberBand {
+  -webkit-animation-name: rubberBand;
+  animation-name: rubberBand;
+}
+
+/*
+ * Not used...
+@-webkit-keyframes shake {
+  0%, 100% {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+  }
+
+  10%, 30%, 50%, 70%, 90% {
+    -webkit-transform: translateX(-10px);
+    transform: translateX(-10px);
+  }
+
+  20%, 40%, 60%, 80% {
+    -webkit-transform: translateX(10px);
+    transform: translateX(10px);
+  }
+}
+
+@keyframes shake {
+  0%, 100% {
+    -webkit-transform: translateX(0);
+    -ms-transform: translateX(0);
+    transform: translateX(0);
+  }
+
+  10%, 30%, 50%, 70%, 90% {
+    -webkit-transform: translateX(-10px);
+    -ms-transform: translateX(-10px);
+    transform: translateX(-10px);
+  }
+
+  20%, 40%, 60%, 80% {
+    -webkit-transform: translateX(10px);
+    -ms-transform: translateX(10px);
+    transform: translateX(10px);
+  }
+}
+
+.shake {
+  -webkit-animation-name: shake;
+  animation-name: shake;
+}
+*/
+
+/*
+ * Not used...
+@-webkit-keyframes rotateInDownLeft {
+  0% {
+    -webkit-transform-origin: left bottom;
+    transform-origin: left bottom;
+    -webkit-transform: rotate(-90deg);
+    transform: rotate(-90deg);
+    opacity: 0;
+  }
+
+  100% {
+    -webkit-transform-origin: left bottom;
+    transform-origin: left bottom;
+    -webkit-transform: rotate(0);
+    transform: rotate(0);
+    opacity: 1;
+  }
+}
+
+.rotateInDownLeft {
+  -webkit-animation-name: rotateInDownLeft;
+  animation-name: rotateInDownLeft;
+}
+*/
+
+/*
+ * Show output page slide fX
+ */
+@-webkit-keyframes slideInRight {
+  0% {
+    opacity: 0;
+    -webkit-transform: translateX(2000px);
+    transform: translateX(2000px);
+  }
+
+  100% {
+    -webkit-transform: translateX(0);
+    transform: translateX(0);
+  }
+}
+
+.slideInRight {
+  -webkit-animation-name: slideInRight;
+  animation-name: slideInRight;
 }

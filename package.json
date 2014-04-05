@@ -18,11 +18,12 @@
 		"toolbar": false
 		},
 	"dependencies": {
-		"marked": "*"
+		"marked": "*",
+		"mime": "*"
 	},
 	"maintainers":[ {
-	   "name": "Jean-Yves Le Gall",
-	   "email": "legallj@mac.com",
-	   "web": "http://legalljnc.dyndns.org"
+		"name": "Jean-Yves Le Gall",
+		"email": "legallj@mac.com",
+		"web": "http://legalljnc.dyndns.org"
 	}]
 }
