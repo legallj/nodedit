@@ -170,6 +170,7 @@ subMenu.append(new gui.MenuItem({
 		fs.readFile(lastContext.file, function (err, data) {
 			if (err) {
 				console.log('Read failed: ' + err);	// DBG
+				return;
 			}
 			handleDocumentChange(lastContext.file);
 			// Fill editor page
@@ -255,30 +256,59 @@ var tray = null;
 // -----------------------------------------
 /** @global */
 /** {Object} Default editor keyboard shortcuts */
-var defaultEditCmds = {
-	'Cmd-C': function (cm) { clipboard.set(editor.getSelection()); },
-	'Cmd-X': function (cm) { clipboard.set(editor.getSelection()); editor.replaceSelection(''); },
-	'Cmd-V': function (cm) { editor.replaceSelection(clipboard.get()); },
-	'Cmd-S': function (cm) {handleSaveCmd(); },
-	'Cmd-O': function (cm) {handleOpenButton(); },
-	'Cmd-N': function (cm) {handleNewButton(); },
-	'Cmd-Q': function (cm) {
-			saveOnQuit();
-			gui.App.quit();
-			//gui.App.closeAllWindows();
-		},
-	'Shift-Cmd-S': function (cm) {handleSaveButton(); },
-	'Cmd-Alt-O': function (cm) {cm.toggleOverwrite(); },
-	'Cmd-D': 'goPageDown',
-	'Cmd-U': 'goPageUp',
-	'Ctrl-Space': 'autocomplete',
-	'Ctrl-U': 'deleteLine',
-	'Ctrl-T': 'toggleComment',
-// 	'Ctrl-T': function (cm) {
-// 			if (cm.getTokenAt(cm.getCursor()).type !== 'comment') cm.execCommand('toggleComment');
-// 		},
-	'Enter': 'newlineAndIndentContinueComment'
-};
+var defaultEditCmds = null;
+if (process.platform === 'darwin') {
+	defaultEditCmds = {
+		'Cmd-C': function (cm) { clipboard.set(editor.getSelection()); },
+		'Cmd-X': function (cm) { clipboard.set(editor.getSelection()); editor.replaceSelection(''); },
+		'Cmd-V': function (cm) { editor.replaceSelection(clipboard.get()); },
+		'Cmd-S': function (cm) {handleSaveCmd(); },
+		'Cmd-O': function (cm) {handleOpenButton(); },
+		'Cmd-N': function (cm) {handleNewButton(); },
+		'Cmd-Q': function (cm) {
+				saveOnQuit();
+				gui.App.quit();
+				//gui.App.closeAllWindows();
+			},
+		'Shift-Cmd-S': function (cm) {handleSaveButton(); },
+		'Cmd-Alt-O': function (cm) {cm.toggleOverwrite(); },
+		'Cmd-D': 'goPageDown',
+		'Cmd-U': 'goPageUp',
+		'Ctrl-Space': 'autocomplete',
+		'Ctrl-U': 'deleteLine',
+		'Ctrl-T': 'toggleComment',
+	// 	'Ctrl-T': function (cm) {
+	// 			if (cm.getTokenAt(cm.getCursor()).type !== 'comment') cm.execCommand('toggleComment');
+	// 		},
+		'Enter': 'newlineAndIndentContinueComment'
+	};
+}
+else if (process.platform === 'linux') {
+	defaultEditCmds = {
+		'Ctrl-C': function (cm) { clipboard.set(editor.getSelection()); },
+		'Ctrl-X': function (cm) { clipboard.set(editor.getSelection()); editor.replaceSelection(''); },
+		'Ctrl-V': function (cm) { editor.replaceSelection(clipboard.get()); },
+		'Ctrl-S': function (cm) {handleSaveCmd(); },
+		'Ctrl-O': function (cm) {handleOpenButton(); },
+		'Ctrl-N': function (cm) {handleNewButton(); },
+		'Ctrl-Q': function (cm) {
+				saveOnQuit();
+				gui.App.quit();
+				//gui.App.closeAllWindows();
+			},
+		'Shift-Ctrl-S': function (cm) {handleSaveButton(); },
+		'Ctrl-Alt-O': function (cm) {cm.toggleOverwrite(); },
+		'Ctrl-D': 'goPageDown',
+		'Ctrl-U': 'goPageUp',
+		'Ctrl-Space': 'autocomplete',
+		'Shift-Ctrl-U': 'deleteLine',
+		'Ctrl-T': 'toggleComment',
+	// 	'Ctrl-T': function (cm) {
+	// 			if (cm.getTokenAt(cm.getCursor()).type !== 'comment') cm.execCommand('toggleComment');
+	// 		},
+		'Enter': 'newlineAndIndentContinueComment'
+	};
+}
 
 // -----------------------------------------
 // The editor must have focus to respond
@@ -1461,47 +1491,54 @@ win.on('loaded', function () {
 	* Register keyboard shortcuts on Mac OS-X
 	*/
 	// http://stackoverflow.com/questions/14919459/using-jquery-on-to-watch-for-enter-key-press
+	// http://www.quirksmode.org/js/events_order.html
 	// -------------------------------------
-	// TODO:
 	// Solve conflict with buttons activation
-	// Cmd-Q and win.close() kill process but
+	// Ctrl-Q and win.close() kill process but
 	// window.close() is correctly executed
-	if (process.platform === 'darwin') {
-		$(document).keypress(function (event) {
-			console.log('Keyboard event keyCode/ctrlKey:', event.keyCode, event.ctrlKey);	// DBG
-			if (event.ctrlKey) {
-				switch (event.keyCode) {
-					case 0:
-						// [Ctrl-SPACE]
-						// Recall last context
-						tray.menu.items[2].click();
-						break;
-					case 12:
-						// [Ctrl-L]
-						// Reload browser page
-						tray.menu.items[6].click();
-						break;
-					case 13:
-						// [Ctrl-ENTER]
-						// Toggle Debug Window
-						tray.menu.items[3].click();
-						break;
-					case 14:
-						// [Ctrl-N]
-						// Create new file
-						handleNewButton();
-						break;
-					case 15:
-						// [Ctrl-O]
-						// Open file chooser
-						handleOpenButton();
-						break;
-					default:
-						$.noop();
-				}
+	// -------------------------------------
+	//$(document).keypress(function (event) {...}
+	// Prefer 'keydown' so the same keyCodes
+	// are received under Linux and Darwin
+	// -------------------------------------
+
+	$(document).keydown(function (event) {
+		console.log('Keyboard event keyCode/ctrlKey:', event.keyCode, event.ctrlKey);	// DBG
+		if (event.ctrlKey) {
+			event.stopPropagation();
+			switch (event.keyCode) {
+				case 32:
+					// [Ctrl-SPACE]
+					// Recall last context
+					tray.menu.items[2].click();
+					break;
+				case 76:
+					// [Ctrl-L]
+					// Reload browser page
+					tray.menu.items[6].click();
+					break;
+				case 87:
+					// [Ctrl-W]
+					// Toggle Debug Window
+					event.preventDefault();
+					tray.menu.items[3].click();
+					break;
+				case 78:
+					// [Ctrl-N]
+					// Create new file
+					handleNewButton();
+					break;
+				case 79:
+					// [Ctrl-O]
+					// Open file chooser
+					handleOpenButton();
+					break;
+				default:
+					$.noop();
 			}
-		});
-	}
+			return false;
+		}
+	});
 
    /**
 	* Configure highlight.pack to replace 'tab' by 4 spaces<br>
