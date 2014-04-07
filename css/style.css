@@ -185,7 +185,8 @@ footer {
 	border-top: 2px groove #aaa;
 	color: #ffc;
 	box-shadow: none;
-	z-index: 5;
+	/* Displayed above '#editor' (z=4) and '#output' (z=5) layers */
+	z-index: 6;
 }
 footer.hover {
 	background-color: #888;
@@ -394,4 +395,35 @@ caption {
 .slideInRight {
   -webkit-animation-name: slideInRight;
   animation-name: slideInRight;
+}
+
+/*
+ * WEBKIT SCROLL BARS
+ * Refer to:
+ * http://css-tricks.com/custom-scrollbars-in-webkit/
+ * http://www.screenfeed.fr/blog/personnaliser-les-scrollbars-webkit-0366/
+ */
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track-piece {
+    -webkit-border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:vertical {
+    background-color: #aaa;
+    -webkit-border-radius: 3px;
+
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+    background-color: #aaa;
+    -webkit-border-radius: 3px;
+}
+
+::-webkit-scrollbar-corner {	/* invisible window corner */
+	background: transparent;
 }
