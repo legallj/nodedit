@@ -1511,18 +1511,18 @@ win.on('loaded', function () {
 				case 32:
 					// [Ctrl-SPACE]
 					// Recall last context
-					tray.menu.items[2].click();
+					subMenu.items[2].click();
 					break;
 				case 76:
 					// [Ctrl-L]
 					// Reload browser page
-					tray.menu.items[6].click();
+					subMenu.items[6].click();
 					break;
 				case 87:
 					// [Ctrl-W]
 					// Toggle Debug Window
 					event.preventDefault();
-					tray.menu.items[3].click();
+					subMenu.items[3].click();
 					break;
 				case 78:
 					// [Ctrl-N]
