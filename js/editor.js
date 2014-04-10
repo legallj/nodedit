@@ -48,6 +48,10 @@ var mime = require('mime');
 // Set instead of mime default 'application/octet-stream'
 mime.default_type = 'text/plain';
 
+/** @global */
+/** {Module} Custom plugin: load snippet */
+var snippet = require('snippet');
+
 // -----------------------------
 // GLOBAL VARIABLES
 // -----------------------------
@@ -661,8 +665,8 @@ function handleNewButton() {
 		editor.setCursor({line: 0, ch: 0});
 		editor.setSelection({line: 0, ch: 0}, {line: 1, ch: 0});	// Select line
 		editor.focus();
-		dirtyBit = false;
-		$('#save').hide();
+		dirtyBit = true;
+		$('#save').show();
 		outPage.hide();
 	}
 	else {
@@ -939,6 +943,7 @@ function listFuncs(editor) {
 	var result = [];
 
 	// Compile RegExp only once
+	// Check online at http://regex101.com/
 	var funcPatt = /^\s*function\s+(\w+)/;
 	funcPatt.compile(funcPatt);
 	var handlePatt = /(\w+)\s+=\s+function/;
@@ -1533,6 +1538,11 @@ win.on('loaded', function () {
 					// [Ctrl-O]
 					// Open file chooser
 					handleOpenButton();
+					break;
+				case 221:
+					// [Ctrl-$]
+					// Replace text by snippet
+					snippet.loadSnippet(editor);
 					break;
 				default:
 					$.noop();

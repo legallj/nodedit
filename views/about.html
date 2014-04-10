@@ -8,11 +8,10 @@ http://www.google.com/fonts#ChoosePlace:select
 <link href='http://fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
 <link href='http://fonts.googleapis.com/css?family=Orbitron:400' rel='stylesheet' type='text/css'>
 <link href='http://fonts.googleapis.com/css?family=Tangerine' rel='stylesheet' type='text/css'>
+<link href='http://fonts.googleapis.com/css?family=Wallpoet' rel='stylesheet' type='text/css'><!-- 
+<link rel="stylesheet" href="../css/style.css">
 -->
 <link href='http://fonts.googleapis.com/css?family=Roboto:400,100' rel='stylesheet' type='text/css'>
-<!-- 
-<link rel="stylesheet" href="../css/style.css">
- -->
 <style>
 body {
 	margin: 0;
@@ -64,6 +63,8 @@ blockquote {
 	z-index: 5;	/* above editor layers z = 0..3 */
 	background: #fff;
 	overflow: scroll;
+/*	background-image: url('../img/banner.png'); */
+/*	background-repeat: repeat-x; */
 /*	display: none; */
 /*	visibility: hidden; hidden on start */
 }
@@ -205,7 +206,7 @@ caption {
 <!-- FRONT PAGE -->
 <h1 class='animated rubberBand'>nodEdit &mdash; Minimal IDE</h1>
 
-<p>2014-03-31</p>
+<p>2014-04-07</p>
 
 <blockquote>Minimal IDE dedicated to single page application (SPA) development under NodeJS with WebKit.
 This simple tool implements the read - execute - print - loop (REPL) paradigme using only HTML5, CSS3 and Javascript to develop/debug Shell and Python scripts, HTML and NodeJS code as well as Markdown or plain text documentation files.</blockquote>
@@ -241,6 +242,9 @@ This simple tool implements the read - execute - print - loop (REPL) paradigme u
 	</tr>
 	<tr>
 		<td>Ctrl-N</td><td>&rarr; Create a new document as text/plain</td>
+	</tr>
+	<tr>
+		<td>Ctrl-$</td><td>&rarr; Select new document type</td>
 	</tr>
 	<tr>
 		<td>Ctrl-L</td><td>&rarr; Reload WebKit browser</td>
