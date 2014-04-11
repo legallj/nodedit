@@ -130,9 +130,100 @@ process.on('uncaughtException', function (err) {
     console.log('Uncaught error', err);
 });
 
+/**
+ * Helper to Create New document<br>
+ * Introduced to avoid code duplication
+ */
+function helpCreateNewDoc() {
+	// Save global mode name
+	mode = editor.getOption('mode');
+	// Check if a valid snippet was selected
+	if (fileEntry) {
+		if (typeof mode === 'object') {
+			// Special case of 'python' options
+			mode = mode.name;
+		}
+		console.log('Snippet mode:', mode);	// DBG
+		// Write content into '/tmp' folder
+		writeEditorToFile(fileEntry);
+		// Needed to set cursor at the expected position (!)
+		editor.focus();
+	}
+}
+
+// -----------------------------------------
+// Create New-Document context-menu
+// -----------------------------------------
+
+/** @global */
+/** {Reference} to Array of available new document snippets */
+var newContextMenu = [{
+		name: 'Text',
+		title: 'create document /tmp/nodedit.txt file',
+		fun: handleNewButton
+}, {
+		name: 'Markdown',
+		title: 'create document /tmp/nodedit.md file',
+		fun: function () {
+			// Replace text by snippet
+			fileEntry = snippet.byName(editor, 'markdown');
+			helpCreateNewDoc();
+		}
+}, {
+		name: 'Shell',
+		title: 'create executable /tmp/nodedit.sh file',
+		fun: function () {
+			// Replace text by snippet
+			fileEntry = snippet.byName(editor, 'shell');
+			// Check if valid snippet was found
+			helpCreateNewDoc();
+		}
+}, {
+		name: 'HTML',
+		title: 'create source /tmp/nodedit.html file',
+		fun: function () {
+			// Replace text by snippet
+			fileEntry = snippet.byName(editor, 'html');
+			helpCreateNewDoc();
+		}
+}, {
+		name: 'Javascript',
+		title: 'create executable Node /tmp/nodedit.js file',
+		fun: function () {
+			// Replace text by snippet
+			fileEntry = snippet.byName(editor, 'javascript');
+			helpCreateNewDoc();
+		}
+}, {
+		name: 'Python',
+		title: 'create executable Node /tmp/nodedit.py file',
+		fun: function () {
+			// Replace text by snippet
+			fileEntry = snippet.byName(editor, 'python');
+			helpCreateNewDoc();
+		}
+}, {
+		name: 'C-like code',
+		title: 'create source /tmp/nodedit.c file',
+		fun: function () {
+			// Replace text by snippet
+			fileEntry = snippet.byName(editor, 'c');
+			helpCreateNewDoc();
+		}
+}, {
+		name: 'Java',
+		title: 'create source /tmp/nodedit.java file',
+		fun: function () {
+			// Replace text by snippet
+			fileEntry = snippet.byName(editor, 'java');
+			helpCreateNewDoc();
+		}
+}];
+ 
 // -----------------------------------------
 // Create Editor menu
 // -----------------------------------------
+
 /** @global */
 /** {Reference} to the WebKit Chromium window */
 var win = gui.Window.get();
@@ -249,7 +340,7 @@ subMenu.append(new gui.MenuItem({
 }));
 
 /** @global */
-/** {Reference} Reference to tray icon with label */
+/** {Reference} to tray icon with label */
 var tray = null;
 
 // -----------------------------------------
@@ -258,32 +349,31 @@ var tray = null;
 // Under Mac OS-X standard clipboard commands
 // are ignored then they shall be restored..!
 // -----------------------------------------
+
 /** @global */
 /** {Object} Default editor keyboard shortcuts */
 var defaultEditCmds = null;
 if (process.platform === 'darwin') {
 	defaultEditCmds = {
-		'Cmd-C': function (cm) { clipboard.set(editor.getSelection()); },
-		'Cmd-X': function (cm) { clipboard.set(editor.getSelection()); editor.replaceSelection(''); },
-		'Cmd-V': function (cm) { editor.replaceSelection(clipboard.get()); },
-		'Cmd-S': function (cm) {handleSaveCmd(); },
-		'Cmd-O': function (cm) {handleOpenButton(); },
-		'Cmd-N': function (cm) {handleNewButton(); },
+		// 'editor' not yet created, will be provided on demand as 'cm' argument
+		'Cmd-C': function (cm) { clipboard.set(cm.getSelection()); },
+		'Cmd-X': function (cm) { clipboard.set(cm.getSelection()); cm.replaceSelection(''); },
+		'Cmd-V': function (cm) { cm.replaceSelection(clipboard.get()); },
+		'Cmd-S': handleSaveCmd,
+		'Cmd-O': handleOpenButton,
+		'Cmd-N': handleNewButton,
 		'Cmd-Q': function (cm) {
-				saveOnQuit();
-				gui.App.quit();
-				//gui.App.closeAllWindows();
-			},
-		'Shift-Cmd-S': function (cm) {handleSaveButton(); },
+					saveOnQuit();
+					gui.App.quit();
+					//gui.App.closeAllWindows();
+				},
 		'Cmd-Alt-O': function (cm) {cm.toggleOverwrite(); },
+		'Shift-Cmd-S': handleSaveButton,
 		'Cmd-D': 'goPageDown',
 		'Cmd-U': 'goPageUp',
-		'Ctrl-Space': 'autocomplete',
+		'Shift-Cmd-Space': 'autocomplete',
 		'Ctrl-U': 'deleteLine',
 		'Ctrl-T': 'toggleComment',
-	// 	'Ctrl-T': function (cm) {
-	// 			if (cm.getTokenAt(cm.getCursor()).type !== 'comment') cm.execCommand('toggleComment');
-	// 		},
 		'Enter': 'newlineAndIndentContinueComment'
 	};
 }
@@ -292,31 +382,29 @@ else if (process.platform === 'linux') {
 		'Ctrl-C': function (cm) { clipboard.set(editor.getSelection()); },
 		'Ctrl-X': function (cm) { clipboard.set(editor.getSelection()); editor.replaceSelection(''); },
 		'Ctrl-V': function (cm) { editor.replaceSelection(clipboard.get()); },
-		'Ctrl-S': function (cm) {handleSaveCmd(); },
-		'Ctrl-O': function (cm) {handleOpenButton(); },
-		'Ctrl-N': function (cm) {handleNewButton(); },
+		'Ctrl-S': handleSaveCmd,
+		'Ctrl-O': handleOpenButton,
+		'Ctrl-N': handleNewButton,
 		'Ctrl-Q': function (cm) {
 				saveOnQuit();
 				gui.App.quit();
 				//gui.App.closeAllWindows();
 			},
-		'Shift-Ctrl-S': function (cm) {handleSaveButton(); },
+		'Shift-Ctrl-S': handleSaveButton,
 		'Ctrl-Alt-O': function (cm) {cm.toggleOverwrite(); },
 		'Ctrl-D': 'goPageDown',
 		'Ctrl-U': 'goPageUp',
 		'Ctrl-Space': 'autocomplete',
 		'Shift-Ctrl-U': 'deleteLine',
 		'Ctrl-T': 'toggleComment',
-	// 	'Ctrl-T': function (cm) {
-	// 			if (cm.getTokenAt(cm.getCursor()).type !== 'comment') cm.execCommand('toggleComment');
-	// 		},
 		'Enter': 'newlineAndIndentContinueComment'
 	};
 }
 
 // -----------------------------------------
-// The editor must have focus to respond
+// Note: The editor must have focus to respond
 // -----------------------------------------
+
 /** @global */
 /** {Object} Markdown specific keyboard shortcuts */
 var markdownEditCmds = {
@@ -393,6 +481,7 @@ var markdownEditCmds = {
 // NOTE:
 // RegExp tester at http://regex101.com/
 // -----------------------------
+
 /**
  * Configure the editor according to doc-type<br>
  * @param {String} filePath - Full path of the target file
@@ -557,6 +646,7 @@ function handleDocumentChange(filePath) {
 // -----------------------------
 // Execute commands
 // -----------------------------
+
 /**
  * Execute new file command<br>
  * Called by: handleNewButton(), onload event handler<br>
@@ -614,11 +704,13 @@ function writeEditorToFile(theFileEntry) {
 			console.log('Write failed: ' + err);	// DBG
 			return err;
 		}
-		// Octal 0777 or 0666 i.e. 'rwx' or 'rw-' file mode
-		var xxx = (mode === 'shell' || mode === 'javascript') ? 511:438;
+		// Set execution rights according to document type
+		// Note: Octal constants are not allowed by JSHint
+		// Octal '0777' (511) or '0666' (438) means 'rwx' or 'rw-' file mode
+		var xxx = ((mode === 'javascript') || (mode === 'shell') || (mode === 'python')) ? 511:438;
 		fs.chmod(theFileEntry, xxx, function (err) {
 			handleDocumentChange(theFileEntry);
-			console.log('Write completed with mode:', xxx);	// DBG
+			console.log('File:', mode, 'Write completed with mode:', xxx);	// DBG
 			return err;
 		});
 	});
@@ -627,6 +719,7 @@ function writeEditorToFile(theFileEntry) {
 // -----------------------------
 // File chooser event handlers
 // -----------------------------
+
 /**
  * Open file chooser event handlers<br>
  * Called by: readFileIntoEditor event handler<br>
@@ -651,8 +744,9 @@ var onChosenFileToSave = function (theFileEntry) {
 };
 
 // -----------------------------
-// Command handlers
-// --------- Buttons -----------
+// Command Handlers
+// -----------------------------
+
 /**
  * New file button event handlers<br>
  * Called by: newButton.addEventListener()<br>
@@ -677,6 +771,7 @@ function handleNewButton() {
 		window.open('main.html', '_blank', 'screenX=' + x + ',screenY=' + y);
 	}
 }
+
 /**
  * Open file button event handlers<br>
  * Called by: openButton.addEventListener()<br>
@@ -684,12 +779,12 @@ function handleNewButton() {
 function handleOpenButton() {
 	$('#openFile').trigger('click');
 }
+
 /**
  * Save file button event handlers<br>
  * Called by: saveButton.addEventListener()<br>
  */
 function handleSaveButton() {
-//	if (fileEntry && hasWriteAccess) {
 	if (false) {
 		writeEditorToFile(fileEntry);
 	}
@@ -697,6 +792,7 @@ function handleSaveButton() {
 		$('#saveFile').trigger('click');
 	}
 }
+
 /**
  * Run file button event handlers,<br>
  * - Save file before run<br>
@@ -800,8 +896,9 @@ function doRunFile(argStr) {
 // such as ':visible'. Then use flag
 // or include jQuery instead of Zepto
 // -----------------------------
+
 /**
- * Preview Markdown file button event handlers<br>
+ * Preview HTML and Markdown file button click event handlers<br>
  * Called by: viewButton.addEventListener()<br>
  */
 function handleViewButton() {
@@ -918,8 +1015,9 @@ function handleSaveCmd() {
 // Regex online tester:
 // http://regex101.com/
 // -------------------------------------
+
 /**
- * Scan document to list functions<br>
+ * Scan document to list 'Functions'<br>
  * Record line number where to jump<br>
  * Relies on correct usage of DocStrings<br>
  * Called by: Popup context menu label 'List Funcs'<br>
@@ -1010,7 +1108,7 @@ function listFuncs(editor) {
 } // end listFuncs()
 
 /**
- * Scan document to list variables<br>
+ * Scan document to list 'Variables'<br>
  * Record line number where to jump<br>
  * Relies on correct usage of DocStrings<br>
  * Called by: Popup context menu label 'List Vars'<br>
@@ -1051,7 +1149,8 @@ function listVars(editor) {
 } // end Vars()
 
 /**
- * Jump to a given line, stay inside editor bounds and center display
+ * Jump to a given line number<br>
+ * Stay inside editor bounds and center display
  */
 function gotoLine() {
 	editor.openDialog('<input type="text" value="default">Line number</input>',
@@ -1072,6 +1171,7 @@ function gotoLine() {
 // -----------------------------
 // Popup Javascript subMenu
 // -----------------------------
+
 /** @global */
 /** {Instance} Create Javascript dedicated popup sub-menu */
 var submenuJavascript = new gui.Menu();
@@ -1113,6 +1213,7 @@ submenuJavascript.append(new gui.MenuItem({
 // -----------------------------
 // Popup Markdown subMenu
 // -----------------------------
+
 /** @global */
 /** {Instance} Create Markdown dedicated popup sub-menu */
 var submenuMarkdown = new gui.Menu();
@@ -1156,6 +1257,7 @@ submenuMarkdown.append(new gui.MenuItem({
 // -----------------------------
 // Set empty content by default
 // -----------------------------
+
 /** @global */
 /** {Instance} Create popup menu item holding dedicated sub-menu */
 var extItem = new gui.MenuItem({type: 'normal', label: 'No Extensions'});
@@ -1163,6 +1265,7 @@ var extItem = new gui.MenuItem({type: 'normal', label: 'No Extensions'});
 // -----------------------------
 // Popup context menu
 // -----------------------------
+
 /**
  * Create GUI context menu<br>
  * Called by: win.on 'loaded' webkit App event<br>
@@ -1263,7 +1366,7 @@ function editDropFile(e) {
 		readFileIntoEditor(file);
 	}
 	else if (stats.isDirectory()) {
-//		if (e.altKey) {	// Useless option key..!
+		//if (e.altKey) {	// Useless option key..!
 		if (true) {
 			// Create a new 'README.md' file in 'file' directory
 			// WARN: 'file' path is global and shall be updated
@@ -1367,6 +1470,7 @@ function autoFill(cm, changeObj) {
 // =============================
 //   INIT ON DOCUMENT LOADED
 // =============================
+
 /**
  * Initialize application<br>
  * Replace window.onload = function () {...}<br>
@@ -1420,25 +1524,30 @@ win.on('loaded', function () {
 	// https://github.com/rogerwang/node-webkit/wiki/Dragging-files-into-page
 	// -------------------------
 	// NOTE: 'event.returnValue' is deprecated.
+	
 	/**
 	* Prevent default window.ondragover action
 	*/
 	window.ondragover = function (e) { e.preventDefault(); };
+	
 	/**
 	* Prevent default window.ondrop action
 	*/
 	window.ondrop = function (e) { e.preventDefault(); };
 	var holder = document.getElementById('holder');
+	
 	/**
 	* Highlight '#holder' area while 'ondragover'
 	*/
 	holder.ondragover = function () { this.className = 'hover'; $('#open').addClass('animated rubberBand'); };
 	//holder.ondragover = function () { this.className = 'hover'; $('header').addClass('animated shake'); };
+	
 	/**
 	* Restore '#holder' style when 'ondragleave' occurs
 	*/
 	holder.ondragleave  = function () { this.className = ''; $('#open').removeClass('animated rubberBand'); };
 	//holder.ondragleave  = function () { this.className = ''; $('header').removeClass('animated shake'); };
+	
 	/**
 	* Handle drop event, call 'editDropFile(e)'
 	*/
@@ -1465,14 +1574,18 @@ win.on('loaded', function () {
 	// References to DOM elements
 	outPage = $('#output');
 
-	newButton = document.getElementById('new');
+	// Replaced by popup menu
+	//newButton = document.getElementById('new');
 	openButton = document.getElementById('open');
+	
 	saveButton = document.getElementById('save');
 	runButton = document.getElementById('run');
 	viewButton = document.getElementById('view');
 
-	newButton.addEventListener('click', handleNewButton);
+	// Replaced by popup menu
+	//newButton.addEventListener('click', handleNewButton);
 	openButton.addEventListener('click', handleOpenButton);
+	
 	saveButton.addEventListener('click', handleSaveButton);
 	runButton.addEventListener('click', handleRunButton);
 	viewButton.addEventListener('click', handleViewButton);
@@ -1480,12 +1593,16 @@ win.on('loaded', function () {
 	// Create popup context menu
 	initContextMenu();
 
+	// Popup new document context menu
+	$('#new').contextMenu('menu', newContextMenu, {triggerOn: 'hover'});
+	
 	/**
 	* Register file chooser 'save' event
 	*/
 	$('#saveFile').change(function (evt) {
 		onChosenFileToSave($(this).val());
 	});
+	
 	/**
 	* Register file chooser 'open' event
 	*/
@@ -1493,9 +1610,6 @@ win.on('loaded', function () {
 		onChosenFileToOpen($(this).val());
 	});
 
-	/**
-	* Register keyboard shortcuts on Mac OS-X
-	*/
 	// http://stackoverflow.com/questions/14919459/using-jquery-on-to-watch-for-enter-key-press
 	// http://www.quirksmode.org/js/events_order.html
 	// -------------------------------------
@@ -1508,6 +1622,9 @@ win.on('loaded', function () {
 	// are received under Linux and Darwin
 	// -------------------------------------
 
+	/**
+	* Register keyboard shortcuts on Mac OS-X
+	*/
 	$(document).keydown(function (event) {
 		console.log('Keyboard event keyCode/ctrlKey:', event.keyCode, event.ctrlKey);	// DBG
 		if (event.ctrlKey) {
@@ -1539,10 +1656,14 @@ win.on('loaded', function () {
 					// Open file chooser
 					handleOpenButton();
 					break;
+				case 52:
+					// [Ctrl-$]
+					// Replace text by snippet under Linux
 				case 221:
 					// [Ctrl-$]
-					// Replace text by snippet
-					snippet.loadSnippet(editor);
+					// Replace text by snippet under OS-X
+					fileEntry = snippet.loadSnippet(editor);
+					helpCreateNewDoc();
 					break;
 				default:
 					$.noop();
@@ -1635,6 +1756,7 @@ win.on('loaded', function () {
 // Specified webkit method below crash..!
 // win.on('resize', function (width, height) {...});
 // -----------------------------
+
 /**
  * Resize window and adjust editor page<br>
  * Called by: 'resize' even<br>
@@ -1651,5 +1773,6 @@ window.onresize = function () {
 
 	editor.refresh();
 };
+
 //
 // ------------ END ------------
