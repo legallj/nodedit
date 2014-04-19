@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>nodEdit - Tutorial</title>
+<link rel="stylesheet" href="../css/tuto.css">
+<script src="../js/buzz.min.js"></script>
+</head>
+
+<body>
+<header>&mdash;&nbsp;About&thinsp;&bull;</header>
+<div class="buttons">&nbsp;</div>
+
+<div id="output">
+<!-- FRONT PAGE -->
+<!--
+<div id="banner">
+<img src="../img/about.png" class='animated rubberBand'>
+</div>
+ -->
+
+<video width="1280" height="800" controls>
+  <source src="../video/nodedit.mp4" type="video/mp4">
+</video>
+
+<table><tr><td>
+<h3>Available Video Tutorials</h3>
+
+<ul>
+	<li>Return to <a href="./about.html" target="_self">About</a> page</li>
+	<li><a href="./tuto.html" target="_self">Open</a> existing or new file</li>
+	<li><a href="./tuto1.html" target="_self">Edit</a> document</li>
+	<li><a href="./tuto2.html" target="_self">Run</a> script or program</li>
+</ul>
+</td><td>
+<h3>Useful Web References</h3>
+
+<ul>
+    <li>Module &mdash; <a href="https://github.com/appjs/appjs/wiki/Install-and-use-a-third-party-nodejs-module">Install and use a third party NodejJS module</a></li>
+    <li>Yo &mdash; <a href="https://github.com/yeoman/yeoman/wiki/Getting-Started">Getting started with Yeoman</a></li>
+    <li>Object &mdash; <a href="https://github.com/rogerwang/node-webkit/wiki/Transfer-objects-between-window-and-node">Transfer objects between window and node</a></li>
+    <li>node-webkit &mdash; <a href="https://github.com/rogerwang/node-webkit#downloads">Download</a></li>
+    <li>node-webkit &mdash; <a href="https://github.com/rogerwang/node-webkit/wiki/Manifest-format">Manifest format</a></li>
+    <li>node-webkit &mdash; <a href="https://github.com/rogerwang/node-webkit/wiki/Native-UI-API-Manual#menus">Native UI API Manual</a></li>
+    <li>node-webkit &mdash; <a href="https://github.com/rogerwang/node-webkit/wiki/Support-mp3-and-h264-in-video-and-audio-tag">Support mp3 and mp4/h264 in video and audio tag (AVI not supported)</a></li>
+    <li>HTML5 &mdash; <a href="http://www.w3schools.com/html/html5_video.asp">Video Formats</a></li>
+    <li>Buzz &mdash; <a href="https://github.com/jaysalvat/buzz">Javascript HTML5 Audio library</a></li>
+    <li>npm scp2 &mdash; <a href="https://www.npmjs.org/package/scp2">A pure javascript scp program based on ssh2</a></li>
+    <li>CodeMirror 3 &mdash; <a href="http://codemirror.net/2/doc/manual.html">User manual and reference guide</a></li>
+    <li>Emmet &mdash; <a href="http://docs.emmet.io/abbreviations/syntax/">Zen Coding HTML abbreviations syntax</a></li>
+    <li>hljs &mdash; <a href="http://highlightjs.org/usage/">How to use highlight.js</a></li>
+    <li>Animate.CSS &mdash; <a href="http://daneden.github.io/animate.css/">Just-add-water CSS animations</a></li>
+    <li>Google Fonts &mdash; <a href="https://developers.google.com/fonts/docs/getting_started">Google Developers</a></li>
+</ul>
+<td></tr></table>
+</div>
+
+<footer>
+Version: 2014-04-14 &copy; HomeLab
+</footer>
+<script>
+var mySound = new buzz.sound( "../sounds/click", {
+    formats: [ "ogg", "wav", "mp3", "aac" ]
+});
+mySound.play()
+//    .fadeIn()
+//     .bind( "timeupdate", function() {
+//         var timer = buzz.toTimer( this.getTime() );
+//         document.getElementById( "timer" ).innerHTML = timer;
+//     })
+;
+</script>
+</body>
+</html>

@@ -9,7 +9,7 @@
 
 // NOTE: 'jshint' at https://github.com/gruntjs/grunt-contrib-jshint
 // Octal literals are not allowed in strict mode, convert them to dec.
-// Take '<workspace>/.jshintrc' into account then file options 
+// Take '<workspace>/.jshintrc' into account then file options
 
 /**
  * @fileOverview WebApp developped under node-webkit to edit, preview and execute files<br>
@@ -219,7 +219,7 @@ var newContextMenu = [{
 			helpCreateNewDoc();
 		}
 }];
- 
+
 // -----------------------------------------
 // Create Editor menu
 // -----------------------------------------
@@ -299,7 +299,7 @@ subMenu.append(new gui.MenuItem({
 	label: 'About',
 	click: function () {
 		// Open help page in a small separate
-		// window without navigation bar
+		// window with navigation bar
 		var new_win = gui.Window.open('about.html', {
 			position: 'center',
 			toolbar: true,
@@ -307,6 +307,25 @@ subMenu.append(new gui.MenuItem({
 			height: 600
 		});
 		new_win.moveTo(150, 100);
+	}
+}));
+subMenu.append(new gui.MenuItem({
+	type: 'normal',
+	label: 'Tutorial',
+	click: function () {
+		// Open tutorial page in the default browser window to get audio output
+		childProcess.exec('open ' + process.cwd() + '/views/tuto.html', function (error, stdout, stderr) {
+			if (error) {console.log(stderr.toString()); }
+		});
+		// Open a separate Chromium webkit window
+		// video Ok but no audio output..!
+// 		var new_win = gui.Window.open('tuto.html', {
+// 			position: 'center',
+// 			toolbar: true,
+// 			width: 1350,
+// 			height: 850
+// 		});
+// 		new_win.moveTo(150, 100);
 	}
 }));
 subMenu.append(new gui.MenuItem({ type: 'separator' }));
@@ -421,7 +440,9 @@ var markdownEditCmds = {
 	},
 	'Cmd-U': function (doc) { /* Underline (Haroopad only) */
 		if (doc.somethingSelected()) {
-			doc.replaceSelection('_' + doc.getSelection() + '_');
+			// Underscore surrounded text is only recognized by 'Haroopad' as underline
+			//doc.replaceSelection('_' + doc.getSelection() + '_');
+			doc.replaceSelection('<span style="text-decoration:underline;">' + doc.getSelection() + '</span>');
 		}
 	},
 	'Cmd-J': function (doc) { /* Code */
@@ -1524,30 +1545,30 @@ win.on('loaded', function () {
 	// https://github.com/rogerwang/node-webkit/wiki/Dragging-files-into-page
 	// -------------------------
 	// NOTE: 'event.returnValue' is deprecated.
-	
+
 	/**
 	* Prevent default window.ondragover action
 	*/
 	window.ondragover = function (e) { e.preventDefault(); };
-	
+
 	/**
 	* Prevent default window.ondrop action
 	*/
 	window.ondrop = function (e) { e.preventDefault(); };
 	var holder = document.getElementById('holder');
-	
+
 	/**
 	* Highlight '#holder' area while 'ondragover'
 	*/
 	holder.ondragover = function () { this.className = 'hover'; $('#open').addClass('animated rubberBand'); };
 	//holder.ondragover = function () { this.className = 'hover'; $('header').addClass('animated shake'); };
-	
+
 	/**
 	* Restore '#holder' style when 'ondragleave' occurs
 	*/
 	holder.ondragleave  = function () { this.className = ''; $('#open').removeClass('animated rubberBand'); };
 	//holder.ondragleave  = function () { this.className = ''; $('header').removeClass('animated shake'); };
-	
+
 	/**
 	* Handle drop event, call 'editDropFile(e)'
 	*/
@@ -1577,7 +1598,7 @@ win.on('loaded', function () {
 	// Replaced by popup menu
 	//newButton = document.getElementById('new');
 	openButton = document.getElementById('open');
-	
+
 	saveButton = document.getElementById('save');
 	runButton = document.getElementById('run');
 	viewButton = document.getElementById('view');
@@ -1585,7 +1606,7 @@ win.on('loaded', function () {
 	// Replaced by popup menu
 	//newButton.addEventListener('click', handleNewButton);
 	openButton.addEventListener('click', handleOpenButton);
-	
+
 	saveButton.addEventListener('click', handleSaveButton);
 	runButton.addEventListener('click', handleRunButton);
 	viewButton.addEventListener('click', handleViewButton);
@@ -1595,14 +1616,14 @@ win.on('loaded', function () {
 
 	// Popup new document context menu
 	$('#new').contextMenu('menu', newContextMenu, {triggerOn: 'hover'});
-	
+
 	/**
 	* Register file chooser 'save' event
 	*/
 	$('#saveFile').change(function (evt) {
 		onChosenFileToSave($(this).val());
 	});
-	
+
 	/**
 	* Register file chooser 'open' event
 	*/
@@ -1638,7 +1659,7 @@ win.on('loaded', function () {
 				case 76:
 					// [Ctrl-L]
 					// Reload browser page
-					subMenu.items[6].click();
+					subMenu.items[7].click();
 					break;
 				case 87:
 					// [Ctrl-W]
@@ -1715,7 +1736,7 @@ win.on('loaded', function () {
 		}
 	);
 	$('#save').hide();
-	
+
 	/**
 	* Register click in gutter to select the entire line(s) from last cursor position
 	*/

@@ -1,0 +1,186 @@
+body {
+	margin: 0;
+	padding: 0;
+	overflow: hidden;
+}
+
+h1 {
+	font-family: 'Roboto', sans-serif;
+	font-weight: 100;
+	font-size: 60px;
+	color: maroon;
+	text-shadow: 4px 4px 4px #aaa;
+	text-align: center;
+}
+
+a {
+	text-decoration: none;
+	color: #79f;
+}
+
+a:hover { color: maroon; }
+
+code {
+	font-family: Courier, monospace, serif;
+	color: maroon;
+}
+
+blockquote {
+	margin: 0;
+	width: 565px;
+	padding-left: 15px;
+	margin-bottom: 48px;
+	border-left: 4px solid #ccc;
+	font-style: italic;
+	text-align: justify;
+	color: #888;
+}
+
+#output {
+	font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+	font-size: 13px;
+	padding: 25px;
+	position: absolute;
+	top: 44px;
+	bottom: 27px;
+	left: 0;
+	right: 0;
+	z-index: 5;	/* above editor layers z = 0..3 */
+	background: #fff;
+	overflow: scroll;
+/*	background-image: url('../img/banner.png'); */
+/*	background-repeat: repeat-x; */
+/*	display: none; */
+/*	visibility: hidden; hidden on start */
+}
+
+#output pre {
+	font-family: "Courier", mono;
+	font-size: 13px;
+	white-space: pre-wrap;
+}
+
+.buttons {
+	padding: 7px;
+	height: 30px;
+	background: maroon;
+/*	background: black;*/
+}
+
+header {
+	position: absolute; top: 7px;
+	right: 35px;
+	color: #ffc;
+	font-family:sans-serif;
+	font-size:28px;
+	letter-spacing:5px;
+/*	text-shadow:5px 3px 10px #000;*/
+	-webkit-animation: sweep 1s; /* Safari and Chrome */
+}
+
+@keyframes sweep /* Safari and Chrome */
+{
+	from {right: -200px;}
+	to   {right: 35px;}
+}
+@-webkit-keyframes sweep /* Firefox */
+{
+	from {right: -200px;}
+	to   {right: 35px;}
+}
+
+footer {
+	font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+	font-size: 13px;
+	white-space: nowrap;
+	position: absolute;
+	bottom: 0;
+	background: maroon;
+	color: #ffc;
+	padding-top: 7px;
+	height: 21px;
+	left: 0;
+	right: 0;
+	text-align: center;
+}
+
+footer label {
+/*  font-weight: bold; */
+	color: #ccc;
+}
+
+table {
+	border-collapse: collapse;
+	margin-left: 25px;
+}
+
+th, td {
+	border-bottom: 1px solid #888;
+	padding: 5px;
+	text-align: left;
+	vertical-align: top;
+}
+
+th {
+	background-color: #eee;
+}
+
+caption {
+	caption-side: top;
+	padding: 15px;
+}
+
+/*
+ * Open title/banner fX on load
+ */
+.animated {
+	-webkit-animation-duration: 1s;
+	-webkit-animation-fill-mode: both;
+}
+
+@-webkit-keyframes rubberBand {
+	0% { -webkit-transform: scale(1); }
+	30% { -webkit-transform: scaleX(1.45); }
+	100% { -webkit-transform: scale(1); }
+}
+
+.rubberBand {
+	-webkit-animation-name: rubberBand;
+}
+
+/*
+ * WEBKIT SCROLL BARS
+ * Refer to:
+ * http://css-tricks.com/custom-scrollbars-in-webkit/
+ * http://www.screenfeed.fr/blog/personnaliser-les-scrollbars-webkit-0366/
+ */
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track-piece {
+    -webkit-border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:vertical {
+    background-color: #aaa;
+    -webkit-border-radius: 3px;
+
+}
+
+::-webkit-scrollbar-thumb:horizontal {
+    background-color: #aaa;
+    -webkit-border-radius: 3px;
+}
+
+::-webkit-scrollbar-corner {	/* invisible window corner */
+	background: transparent;
+}
+
+#banner {
+	margin:0 -25px 0 -25px;
+	background-image:url(../img/line.png);
+	background-repeat:repeat-x;
+}
