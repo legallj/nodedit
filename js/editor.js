@@ -135,6 +135,9 @@ process.on('uncaughtException', function (err) {
  * Introduced to avoid code duplication
  */
 function helpCreateNewDoc() {
+	// -------------------------
+	//console.log("FUNCTION helpCreateNewDoc() called by:\n", arguments.callee.caller.toString());	// TRACE
+	// -------------------------
 	// Save global mode name
 	mode = editor.getOption('mode');
 	// Check if a valid snippet was selected
@@ -150,75 +153,6 @@ function helpCreateNewDoc() {
 		editor.focus();
 	}
 }
-
-// -----------------------------------------
-// Create New-Document context-menu
-// -----------------------------------------
-
-/** @global */
-/** {Reference} to Array of available new document snippets */
-var newContextMenu = [{
-		name: 'Text',
-		title: 'create document /tmp/nodedit.txt file',
-		fun: handleNewButton
-}, {
-		name: 'Markdown',
-		title: 'create document /tmp/nodedit.md file',
-		fun: function () {
-			// Replace text by snippet
-			fileEntry = snippet.byName(editor, 'markdown');
-			helpCreateNewDoc();
-		}
-}, {
-		name: 'Shell',
-		title: 'create executable /tmp/nodedit.sh file',
-		fun: function () {
-			// Replace text by snippet
-			fileEntry = snippet.byName(editor, 'shell');
-			// Check if valid snippet was found
-			helpCreateNewDoc();
-		}
-}, {
-		name: 'HTML',
-		title: 'create source /tmp/nodedit.html file',
-		fun: function () {
-			// Replace text by snippet
-			fileEntry = snippet.byName(editor, 'html');
-			helpCreateNewDoc();
-		}
-}, {
-		name: 'Javascript',
-		title: 'create executable Node /tmp/nodedit.js file',
-		fun: function () {
-			// Replace text by snippet
-			fileEntry = snippet.byName(editor, 'javascript');
-			helpCreateNewDoc();
-		}
-}, {
-		name: 'Python',
-		title: 'create executable Node /tmp/nodedit.py file',
-		fun: function () {
-			// Replace text by snippet
-			fileEntry = snippet.byName(editor, 'python');
-			helpCreateNewDoc();
-		}
-}, {
-		name: 'C-like code',
-		title: 'create source /tmp/nodedit.c file',
-		fun: function () {
-			// Replace text by snippet
-			fileEntry = snippet.byName(editor, 'c');
-			helpCreateNewDoc();
-		}
-}, {
-		name: 'Java',
-		title: 'create source /tmp/nodedit.java file',
-		fun: function () {
-			// Replace text by snippet
-			fileEntry = snippet.byName(editor, 'java');
-			helpCreateNewDoc();
-		}
-}];
 
 // -----------------------------------------
 // Create Editor menu
@@ -508,6 +442,17 @@ var markdownEditCmds = {
  * @param {String} filePath - Full path of the target file
  */
 function handleDocumentChange(filePath) {
+	// --------- Notes ---------
+	// http://stackoverflow.com/questions/280389/how-do-you-find-out-the-caller-function-in-javascript
+	// But this name will be the one after the 'function' keyword (no name for handlers)
+	//console.log("handleDocumentChange called by:", arguments.callee.caller.name);	// TRACE
+	// Then show the code of the caller function
+	// -------------------------
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function/caller
+	// The obsolete 'arguments.caller' property is replaced by '<myFuncName>.caller'
+	// -------------------------
+	//console.log("FUNCTION handleDocumentChange(", filePath, ") called by:\n", arguments.callee.caller.toString());	// TRACE
+	// -------------------------
 	$('#run').hide();
 	$('#view').hide();
 	// Default 'js' edit parameters
@@ -582,7 +527,7 @@ function handleDocumentChange(filePath) {
 			extraKeys = $.extend({}, defaultEditCmds, markdownEditCmds);
 			extItem.submenu = submenuMarkdown;
 			menu.items[5].enabled = true;
-			$('button#view').show();
+			$('#view').show();
 			break;
 		case '.sh':
 		case '.command':
@@ -720,6 +665,9 @@ function readFileIntoEditor(theFileEntry) {
  * @returns {Object} null or write error object
  */
 function writeEditorToFile(theFileEntry) {
+	// -------------------------
+	//console.log("FUNCTION writeEditorToFile(", theFileEntry, ") called by:\n", arguments.callee.caller.toString());	// TRACE
+	// -------------------------
 	fs.writeFile(theFileEntry, editor.getValue(), function (err) {
 		if (err) {
 			console.log('Write failed: ' + err);	// DBG
@@ -826,7 +774,7 @@ function handleRunButton() {
 		// Return to editor page
 		outPage.hide();
 		editor.focus();
-		$('#run').text('Run');
+		$('#run').text('RUN');
 		return;
 	}
 	if (dirtyBit) {
@@ -908,7 +856,7 @@ function doRunFile(argStr) {
 		});
 	}
 	outPage.show();
-	$('#run').text('Edit');
+	$('#run').text('EDIT');
 }
 
 // --------- Buttons -----------
@@ -929,7 +877,7 @@ function handleViewButton() {
 		// then switch to 'editor' page
 		console.log('Hide output');
 		outPage.hide();
-		$('#view').text('View');
+		$('#view').text('VIEW');
 		return;
 	}
 	console.log('Show output:', mode);
@@ -1003,7 +951,7 @@ function handleViewButton() {
 			});
 		});
 		outPage.show();
-		$('#view').text('Edit');
+		$('#view').text('EDIT');
 		break;
 	default:
 		// Nothing to display
@@ -1592,30 +1540,31 @@ win.on('loaded', function () {
 		subMenu.items[1].enabled = false;
 	});
 
-	// References to DOM elements
+	// References to jQuery DOM elements
+	// -------------------------
 	outPage = $('#output');
 
-	// Replaced by popup menu
-	//newButton = document.getElementById('new');
+	// References to native DOM elements
+	// -------------------------
+	newButton = document.getElementById('new');
 	openButton = document.getElementById('open');
-
 	saveButton = document.getElementById('save');
 	runButton = document.getElementById('run');
 	viewButton = document.getElementById('view');
 
-	// Replaced by popup menu
+	// Register mouse left-click event
+	// -------------------------
+	// New button REPLACED by CSS 'New" menu and sub-menu
 	//newButton.addEventListener('click', handleNewButton);
+	// -------------------------
 	openButton.addEventListener('click', handleOpenButton);
-
 	saveButton.addEventListener('click', handleSaveButton);
 	runButton.addEventListener('click', handleRunButton);
 	viewButton.addEventListener('click', handleViewButton);
 
-	// Create popup context menu
+	// Create editor popup context menu
+	// -------------------------
 	initContextMenu();
-
-	// Popup new document context menu
-	$('#new').contextMenu('menu', newContextMenu, {triggerOn: 'hover'});
 
 	/**
 	* Register file chooser 'save' event
@@ -1647,9 +1596,9 @@ win.on('loaded', function () {
 	* Register keyboard shortcuts on Mac OS-X
 	*/
 	$(document).keydown(function (event) {
-		console.log('Keyboard event keyCode/ctrlKey:', event.keyCode, event.ctrlKey);	// DBG
 		if (event.ctrlKey) {
 			event.stopPropagation();
+			console.log('Keyboard event keyCode/ctrlKey:', event.keyCode, event.ctrlKey);	// DBG
 			switch (event.keyCode) {
 				case 32:
 					// [Ctrl-SPACE]
@@ -1677,15 +1626,16 @@ win.on('loaded', function () {
 					// Open file chooser
 					handleOpenButton();
 					break;
-				case 52:
-					// [Ctrl-$]
-					// Replace text by snippet under Linux
-				case 221:
-					// [Ctrl-$]
-					// Replace text by snippet under OS-X
-					fileEntry = snippet.loadSnippet(editor);
-					helpCreateNewDoc();
-					break;
+// Discarded command - Use instead CSS 'New' menu and sub-menu
+// 				case 52:
+// 					// [Ctrl-$]
+// 					// Replace text by snippet under Linux
+// 				case 221:
+// 					// [Ctrl-$]
+// 					// Replace text by snippet under OS-X
+// 					fileEntry = snippet.loadSnippet(editor);
+// 					helpCreateNewDoc();
+// 					break;
 				default:
 					$.noop();
 			}
@@ -1738,16 +1688,26 @@ win.on('loaded', function () {
 	$('#save').hide();
 
 	/**
-	* Register click in gutter to select the entire line(s) from last cursor position
-	*/
+	 * Register click in gutter to select the entire line(s) from last cursor position
+	 */
 	editor.on('gutterClick', function (cm, n) {
 		console.log('gutter click', cm.getCursor().line, n);	// DBG
 		cm.setSelection({line: cm.getCursor().line, ch: 0}, {line: n + 1, ch: 0});
 	});
 
 	/**
-	* Register response to every 'change' event from editor
-	*/
+	 * Register New Document sub-menu click
+	 */
+	$('#new ul li').click(function () {
+		var docType = $(this).attr('type');
+		//alert(docType);	// TST
+		fileEntry = snippet.byName(editor, docType);
+		helpCreateNewDoc();
+	});
+
+	/**
+	 * Register response to every 'change' event from editor
+	 */
 	editor.on('change', function (cm, changeObj) {
 		dirtyBit = true;
 		$('#save').show();
@@ -1757,6 +1717,7 @@ win.on('loaded', function () {
 	onresize();
 
 	// Front page system information complement
+	// -------------------------
 	outPage.append('<pre>CodeMirror v' + CodeMirror.version + ' running node-webkit ' + process.version + ' under ' + process.platform + '\nOpen or create a new file...\n</pre>');
 	outPage.show();
 

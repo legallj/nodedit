@@ -10,6 +10,7 @@ body {
 	margin: 0;
 	padding: 0;
 	overflow: hidden;
+	background-color: maroon; /* Default bgcolor */
 }
 
 h1 { text-shadow: 3px 3px 8px #aaa; }
@@ -43,6 +44,7 @@ button {
 	color: white;
 }
 
+/*
 button:hover {
 	box-shadow: 0 0 10px #ff5;
 }
@@ -50,6 +52,7 @@ button:hover {
 button:active {
 	background: linear-gradient(#000, #888);
 }
+ */
 
 #new:before {
 	content: url(../img/16x16/new.png);
@@ -72,11 +75,11 @@ button:active {
 }
 
 header {
-	position: absolute; top: 7px;
+	position: absolute; top: 12px;
 	right: 35px;
 	color: #ffc;
 	font-family:sans-serif;
-	font-size:28px;
+	font-size: 32px;
 	letter-spacing:5px;
 /*	text-shadow:5px 3px 10px #000;*/
 	-webkit-animation: sweep 1s; /* Safari and Chrome */
@@ -123,7 +126,7 @@ header {
  */
 #editor {
 	position: absolute;
-	top: 44px;
+	top: 64px;
 	bottom: 31px;
 	left: 0;
 	right: 0;
@@ -135,7 +138,7 @@ header {
 	font-size: 13px;
 	padding: 25px;
 	position: absolute;
-	top: 44px;
+	top: 64px;
 	bottom: 27px;
 	left: 0;
 	right: 0;
@@ -197,13 +200,6 @@ footer.hover {
 }
 footer label {
 	color: #ccc;
-}
-
-.buttons {
-	padding: 7px;
-	height: 30px;
-	background: maroon;
-/*	background: black;*/
 }
 
 /**
@@ -426,4 +422,98 @@ caption {
 
 ::-webkit-scrollbar-corner {	/* invisible window corner */
 	background: transparent;
+}
+
+/*
+ * New file CSS3 drop down menu
+ */
+.buttons {
+	padding: 7px;
+	height: 30px;
+	background: maroon;
+}
+
+.buttons ul {
+  text-align: left;
+  display: inline;
+  margin: 0;
+  padding: 15px 4px 17px 0;
+  list-style: none;
+  -webkit-box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  -moz-box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+}
+
+.buttons ul li {
+  z-index: 100;
+  font: bold 12px/18px sans-serif;
+  display: inline-block;
+  margin-right: -4px;
+  position: relative;
+  padding: 15px 20px;
+/*
+ * Online gradient editor at:
+ * http://www.colorzilla.com/gradient-editor/
+ */
+  color: #ffc;
+  cursor: pointer;
+  -webkit-transition: all 0.5s;
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#bc032e), color-stop(62%,#8f0222), color-stop(100%,#5e0001)); /* Chrome,Safari4+ */
+background: -webkit-linear-gradient(top,  #bc032e 0%,#8f0222 62%,#5e0001 100%); /* Chrome10+,Safari5.1+ */
+background: linear-gradient(to bottom,  #bc032e 0%,#8f0222 62%,#5e0001 100%); /* W3C */
+/*
+  -moz-transition: all 0.5s;
+  -ms-transition: all 0.5s;
+  -o-transition: all 0.5s;
+  transition: all 0.5s;
+ */
+}
+
+.buttons ul li:hover {
+  background: #ffc;
+  color: maroon;
+}
+
+.buttons ul li ul {
+  padding: 0;
+  position: absolute;
+  top: 48px;
+  left: 0;
+  width: 150px;
+  -webkit-box-shadow: none;
+  -moz-box-shadow: none;
+  box-shadow: none;
+  display: none;
+  opacity: 0;
+  visibility: hidden;
+  -webkit-transiton: opacity 0.2s;
+/*
+  -moz-transition: opacity 0.2s;
+  -ms-transition: opacity 0.2s;
+  -o-transition: opacity 0.2s;
+  transition: opacity 0.2s;
+ */
+}
+
+.buttons ul li ul li {
+  background: #555;
+  display: block;
+  color: #fff;
+  text-shadow: 1px 1px 3px #000;
+/*
+  -webkit-box-shadow: inset 0 0 7px rgba(0, 0, 0, 0.5);
+  -moz-box-shadow: inset 0 0 7px rgba(0, 0, 0, 0.5);
+  box-shadow: inset 0 0 7px rgba(0, 0, 0, 0.5);
+ */
+}
+
+.buttons ul li ul li:hover {
+  background: #888;
+  color: #fff;
+}
+
+.buttons ul li:hover ul {
+  display: block;
+  opacity: 1;
+  visibility: visible;
 }

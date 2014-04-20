@@ -45,8 +45,6 @@
 <script src="../cm/addon/emmet/emmet.min.js"></script>
 <script src="../js/highlight.pack.js"></script>
 
-<script src="../js/contextMenu.min.js"></script>
-
 <!-- nodEdit Application -->
 <script src="../js/editor.js"></script>
 
@@ -60,17 +58,27 @@
 <link rel="stylesheet" href="../cm/addon/dialog/dialog.css">
 <link rel="stylesheet" href="../css/hljs_solarized_light.css">
 
-<link rel="stylesheet" href="../css/contextMenu.css">
-
 </head>
 <body>
 <header>&mdash;&nbsp;nodEdit&thinsp;&bull;</header>
 <div class="buttons">
-	<button id="new">New</button>
-	<button id="open">Open</button>
-	<button id="save">Save</button>
-	<button id="run">Run</button>
-	<button id="view">View</button>
+<ul><li id="new"> NEW
+    <ul>
+      <li type="text">Text Plain</li>
+      <li type="markdown">Markdown</li>
+      <li type="html">HTML</li>
+      <li type="javascript">Javascript</li>
+      <li type="shell">Shell</li>
+      <li type="python">Python</li>
+      <li type="c">C Language</li>
+      <li type="java">Java</li>
+    </ul>
+  </li>
+  <li id="open"> OPEN</li>
+  <li id="save"> SAVE</li>
+  <li id="run"> RUN</li>
+  <li id="view"> VIEW</li>
+</ul>
 </div>
 
 <!-- PLACE HOLDER -->
