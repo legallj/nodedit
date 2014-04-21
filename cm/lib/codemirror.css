@@ -3,7 +3,7 @@
 .CodeMirror {
   /* Set height, width, borders, and global font properties here */
   /* NOTE: Font 'Courier' is more readable (heavy)
-   * than 'Courier New' but need to be correctly sized 
+   * than 'Courier New' but need to be correctly sized
    */
   font-family: "Courier", monospace;
   font-size: 13px;
@@ -109,6 +109,21 @@
 div.CodeMirror span.CodeMirror-matchingbracket {color: #0f0;}
 div.CodeMirror span.CodeMirror-nonmatchingbracket {color: #f22;}
 .CodeMirror-activeline-background {background: #e8f2ff;}
+
+/* NODEDIT CUSTOM DIALOG LINE STYLE */
+
+div.CodeMirror-dialog.CodeMirror-dialog-top {
+	font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
+	color: #888;
+	background-color: #404040;
+	border-top: 2px groove #888;
+}
+div.CodeMirror-dialog.CodeMirror-dialog-top input {
+	font-family: "Courier New", Courier, mono;
+	width: 25em !IMPORTANT;
+	font-size: 14px;
+	color: #fff;
+}
 
 /* STOP */
 

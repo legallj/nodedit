@@ -154,22 +154,10 @@ header {
 	font-size: 13px;
 	white-space: pre-wrap;
 }
-/*
-footer {
-	font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
-	font-size: 13px;
-	white-space: nowrap;
-	position: absolute;
-	bottom: 0;
-	background: maroon;
-	color: #ffc;
-	padding-top: 7px;
-	height: 21px;
-	left: 0;
-	right: 0;
-	text-align: center;
-}
-*/
+
+/**
+ * Drop down area of file to open
+ */
 footer {
 	font-family: "Helvetica Neue", Arial, Helvetica, Geneva, sans-serif;
 	font-size: 13px;
@@ -191,12 +179,21 @@ footer {
 	/* Displayed above '#editor' (z=4) and '#output' (z=5) layers */
 	z-index: 6;
 }
+/* Enlarge effect on drag over */
 footer.hover {
 	background-color: #888;
 	box-shadow: inset 0 3px 10px #000;
 	font-size: 16px;
 	padding-top: 24px;
 	height: 50px;
+	-webkit-transition: all 0.2s;
+}
+/* Adjust footer information text */
+footer:before {
+	content: 'DROP FILE AREA';
+}
+footer.hover:before {
+	content: 'OPEN FILE ON DROP';
 }
 footer label {
 	color: #ccc;
@@ -302,77 +299,6 @@ caption {
 }
 
 /*
- * Not used...
-@-webkit-keyframes shake {
-  0%, 100% {
-    -webkit-transform: translateX(0);
-    transform: translateX(0);
-  }
-
-  10%, 30%, 50%, 70%, 90% {
-    -webkit-transform: translateX(-10px);
-    transform: translateX(-10px);
-  }
-
-  20%, 40%, 60%, 80% {
-    -webkit-transform: translateX(10px);
-    transform: translateX(10px);
-  }
-}
-
-@keyframes shake {
-  0%, 100% {
-    -webkit-transform: translateX(0);
-    -ms-transform: translateX(0);
-    transform: translateX(0);
-  }
-
-  10%, 30%, 50%, 70%, 90% {
-    -webkit-transform: translateX(-10px);
-    -ms-transform: translateX(-10px);
-    transform: translateX(-10px);
-  }
-
-  20%, 40%, 60%, 80% {
-    -webkit-transform: translateX(10px);
-    -ms-transform: translateX(10px);
-    transform: translateX(10px);
-  }
-}
-
-.shake {
-  -webkit-animation-name: shake;
-  animation-name: shake;
-}
-*/
-
-/*
- * Not used...
-@-webkit-keyframes rotateInDownLeft {
-  0% {
-    -webkit-transform-origin: left bottom;
-    transform-origin: left bottom;
-    -webkit-transform: rotate(-90deg);
-    transform: rotate(-90deg);
-    opacity: 0;
-  }
-
-  100% {
-    -webkit-transform-origin: left bottom;
-    transform-origin: left bottom;
-    -webkit-transform: rotate(0);
-    transform: rotate(0);
-    opacity: 1;
-  }
-}
-
-.rotateInDownLeft {
-  -webkit-animation-name: rotateInDownLeft;
-  animation-name: rotateInDownLeft;
-}
-*/
-
-/*
  * Show output page slide fX
  */
 @-webkit-keyframes slideInRight {
@@ -425,7 +351,7 @@ caption {
 }
 
 /*
- * New file CSS3 drop down menu
+ * New file CSS3 drop-down menu
  */
 .buttons {
 	padding: 7px;
@@ -439,9 +365,7 @@ caption {
   margin: 0;
   padding: 15px 4px 17px 0;
   list-style: none;
-  -webkit-box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  -moz-box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  -webkit-box-shadow: 0 0 12px rgba(0, 0, 0, 0.75);
 }
 
 .buttons ul li {
@@ -458,27 +382,35 @@ caption {
   color: #ffc;
   cursor: pointer;
   -webkit-transition: all 0.5s;
-background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#bc032e), color-stop(62%,#8f0222), color-stop(100%,#5e0001)); /* Chrome,Safari4+ */
-background: -webkit-linear-gradient(top,  #bc032e 0%,#8f0222 62%,#5e0001 100%); /* Chrome10+,Safari5.1+ */
-background: linear-gradient(to bottom,  #bc032e 0%,#8f0222 62%,#5e0001 100%); /* W3C */
+  border: 2px groove #555;
+
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#959595), color-stop(46%,#0d0d0d), color-stop(50%,#010101), color-stop(53%,#0a0a0a), color-stop(76%,#4e4e4e), color-stop(87%,#383838), color-stop(100%,#1b1b1b)); /* Chrome,Safari4+ */
+background: -webkit-linear-gradient(top,  #959595 0%,#0d0d0d 46%,#010101 50%,#0a0a0a 53%,#4e4e4e 76%,#383838 87%,#1b1b1b 100%); /* Chrome10+,Safari5.1+ */
+background: linear-gradient(to bottom,  #959595 0%,#0d0d0d 46%,#010101 50%,#0a0a0a 53%,#4e4e4e 76%,#383838 87%,#1b1b1b 100%); /* W3C */
+
 /*
-  -moz-transition: all 0.5s;
-  -ms-transition: all 0.5s;
-  -o-transition: all 0.5s;
-  transition: all 0.5s;
- */
+background: -webkit-gradient(linear, left top, left bottom, color-stop(0%,#bc032e), color-stop(62%,#8f0222), color-stop(100%,#5e0001));
+background: -webkit-linear-gradient(top,  #bc032e 0%,#8f0222 62%,#5e0001 100%);
+background: linear-gradient(to bottom,  #bc032e 0%,#8f0222 62%,#5e0001 100%);
+*/
 }
 
-.buttons ul li:hover {
+/*
+ * Declare class '.jqhover' on top buttons ':hover' pseudo-class in order to
+ * control display state from jQuery code with addClass/removeClass functions.
+ * http://stackoverflow.com/questions/12740967/how-do-you-add-pseudo-classes-to-elements-using-jquery
+ */
+.buttons ul li:hover, .buttons ul li.jqhover {
   background: #ffc;
   color: maroon;
+  box-shadow: inset 0 0 12px #555;
 }
 
 .buttons ul li ul {
   padding: 0;
   position: absolute;
-  top: 48px;
-  left: 0;
+  top: 52px;
+  left: -2px; /* compensate ul li 2px border */
   width: 150px;
   -webkit-box-shadow: none;
   -moz-box-shadow: none;
@@ -510,6 +442,14 @@ background: linear-gradient(to bottom,  #bc032e 0%,#8f0222 62%,#5e0001 100%); /*
 .buttons ul li ul li:hover {
   background: #888;
   color: #fff;
+}
+
+/*
+ * Unicode semi-graphic chars table at:
+ * http://jrgraphix.net/r/Unicode/2700-27BF
+ */
+.buttons ul li ul li:hover:after {
+  content: ' [✓]';
 }
 
 .buttons ul li:hover ul {

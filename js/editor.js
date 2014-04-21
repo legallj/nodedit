@@ -585,6 +585,7 @@ function handleDocumentChange(filePath) {
 			mode = 'text/plain';
 			modeName = 'Plain text';
 			theme = 'default';
+			editor.setSelection({line: 0, ch: 0}, {line: 1, ch: 0});	// Select line to be replaced
 			$('view').hide();
 		} // end switch
 	}
@@ -724,7 +725,7 @@ var onChosenFileToSave = function (theFileEntry) {
 function handleNewButton() {
 	if (true) {
 		newFile();
-		editor.setValue('New plain text file');
+		editor.setValue('New plain text file...');
 		editor.setCursor({line: 0, ch: 0});
 		editor.setSelection({line: 0, ch: 0}, {line: 1, ch: 0});	// Select line
 		editor.focus();
@@ -1472,16 +1473,18 @@ win.on('loaded', function () {
 		gui.Window.get().menu = winMenu;
 	}
 
-	/**
-	* Register window close event to save settings<br>
-	* window.onbeforeunload = saveOnQuit;<br>
-	* Use instead the specified webkit method
-	* to also respond to manual close window.
-	*/
+	// -------------------------
 	// Refer to:
 	// http://stackoverflow.com/questions/13443503/how-to-run-javascript-code-on-window-close
 	// https://github.com/rogerwang/node-webkit/wiki/Window
 	// -------------------------
+
+	/**
+	 * Register window close event to save settings<br>
+	 * window.onbeforeunload = saveOnQuit;<br>
+	 * Use instead the specified webkit method
+	 * to also respond to manual close window.
+	 */
 	win.on('close', function () {
 		this.hide(); // Pretend to be closed already
 		saveOnQuit();
@@ -1495,37 +1498,56 @@ win.on('loaded', function () {
 	// NOTE: 'event.returnValue' is deprecated.
 
 	/**
-	* Prevent default window.ondragover action
-	*/
+	 * Prevent default window.ondragover action
+	 */
 	window.ondragover = function (e) { e.preventDefault(); };
 
 	/**
-	* Prevent default window.ondrop action
-	*/
+	 * Prevent default window.ondrop action
+	 */
 	window.ondrop = function (e) { e.preventDefault(); };
 	var holder = document.getElementById('holder');
 
 	/**
-	* Highlight '#holder' area while 'ondragover'
-	*/
-	holder.ondragover = function () { this.className = 'hover'; $('#open').addClass('animated rubberBand'); };
+	 * while 'ondragover'
+	 * Highlight footer '#holder' area
+	 * and select header button '#open' programmatically
+	 */
+	holder.ondragover = function () {
+		this.className = 'hover';
+		$('#open').addClass('jqhover');
+	};
+	// DISCARD funny but non realistic button shape animation
+	//holder.ondragover = function () { this.className = 'hover'; $('#open').addClass('animated rubberBand'); };
 	//holder.ondragover = function () { this.className = 'hover'; $('header').addClass('animated shake'); };
 
 	/**
-	* Restore '#holder' style when 'ondragleave' occurs
-	*/
-	holder.ondragleave  = function () { this.className = ''; $('#open').removeClass('animated rubberBand'); };
+	 * Restore footer '#holder' and header
+	 * button '#open' style when 'ondragleave' occurs
+	 */
+	holder.ondragleave  = function () {
+		this.className = '';
+		$('#open').removeClass('jqhover');
+	};
+	// DISCARD funny but non realistic button shape animation
+	//holder.ondragleave  = function () { this.className = ''; $('#open').removeClass('animated rubberBand'); };
 	//holder.ondragleave  = function () { this.className = ''; $('header').removeClass('animated shake'); };
 
 	/**
-	* Handle drop event, call 'editDropFile(e)'
-	*/
-	holder.ondrop = editDropFile;	//function (e) {
+	 * Handle drop event
+	 * Restore footer '#holder' and header
+	 * call 'editDropFile(event)'
+	 */
+	holder.ondrop = function (ev) {
+		this.className = '';
+		$('#open').removeClass('jqhover');
+		editDropFile(ev);
+	};
 
 	/**
-	* Manage show/hide window command
-	* from tray menu or window button
-	*/
+	 * Manage show/hide window command
+	 * from tray menu or window button
+	 */
 	win.on('minimize', function () {
 		console.log('Minimize');	// DBG
 		subMenu.items[0].enabled = false;
@@ -1567,15 +1589,15 @@ win.on('loaded', function () {
 	initContextMenu();
 
 	/**
-	* Register file chooser 'save' event
-	*/
+	 * Register file chooser 'save' event
+	 */
 	$('#saveFile').change(function (evt) {
 		onChosenFileToSave($(this).val());
 	});
 
 	/**
-	* Register file chooser 'open' event
-	*/
+	 * Register file chooser 'open' event
+	 */
 	$('#openFile').change(function (evt) {
 		onChosenFileToOpen($(this).val());
 	});
@@ -1593,8 +1615,8 @@ win.on('loaded', function () {
 	// -------------------------------------
 
 	/**
-	* Register keyboard shortcuts on Mac OS-X
-	*/
+	 * Register keyboard shortcuts on OS-X/Linux
+	 */
 	$(document).keydown(function (event) {
 		if (event.ctrlKey) {
 			event.stopPropagation();
@@ -1626,16 +1648,6 @@ win.on('loaded', function () {
 					// Open file chooser
 					handleOpenButton();
 					break;
-// Discarded command - Use instead CSS 'New' menu and sub-menu
-// 				case 52:
-// 					// [Ctrl-$]
-// 					// Replace text by snippet under Linux
-// 				case 221:
-// 					// [Ctrl-$]
-// 					// Replace text by snippet under OS-X
-// 					fileEntry = snippet.loadSnippet(editor);
-// 					helpCreateNewDoc();
-// 					break;
 				default:
 					$.noop();
 			}
