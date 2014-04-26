@@ -128,6 +128,7 @@ for (var i = 1; i < 12; i++) {
 process.on('uncaughtException', function (err) {
     // handle the error safely
     console.log('Uncaught error', err);
+    client.close();	// Conservative..!
 });
 
 /**
@@ -690,6 +691,34 @@ function writeEditorToFile(theFileEntry) {
 // File chooser event handlers
 // -----------------------------
 
+// ----------- REMOTE ----------
+// For security reason remote file editing
+// relies on local host 'scp' command assuming the
+// correct public key is available on the remote host:
+// - Copy local ~/.ssh/id_rsa.pub
+// - Into remote ~/.ssh/authorized_keys
+// Refer to http://doc.ubuntu-fr.org/ssh
+// ----------- USAGE -----------
+// To edit a remote file, create a JSON
+// descriptor formatted as below:
+// {
+// 	"file": "/home/legallj/test.txt", <--(remote path)
+// 	"user": "legallj",
+// 	"host": "neptune",
+// 	"port": 22, <--(optional)
+// 	"path": "/tmp/test.txt" <--(local path)
+// }
+// Then mame this descriptor '<whatever>.scp'
+// and use it from nodEdit as if it was a local file.
+// The free extension '.scp' makes the difference..!
+// ----------- NOTES -----------
+// Refer to file extensions list at:
+// http://fr.wikipedia.org/wiki/Liste_d%27extensions_de_fichiers#S
+// -----------------------------
+// Refer to node-webkit specific input file attributes
+// https://github.com/rogerwang/node-webkit/wiki/File-dialogs
+// -----------------------------
+
 /**
  * Open file chooser event handlers<br>
  * Called by: readFileIntoEditor event handler<br>
@@ -697,10 +726,78 @@ function writeEditorToFile(theFileEntry) {
  * @param {String} theFileEntry - Full path of the current file
  */
 var onChosenFileToOpen = function (theFileEntry) {
+	console.log('Call: onChosenFileToOpen', theFileEntry);	// DBG
 	if (!theFileEntry) {return; }	// Cancel
-	setFile(theFileEntry, false);
-	readFileIntoEditor(theFileEntry);
+	// Set default open and save file path to the last value as per:
+	// https://github.com/rogerwang/node-webkit/wiki/File-dialogs
+	// (But seems to be automatic.!?)
+	$('#openFile').attr('nwworkingdir', path.dirname(theFileEntry));
+	// You can specify a value for the default file name to save.
+	// Unless specified, we save file in place:
+	$('#saveFile').attr('nwsaveas', theFileEntry);
+	// -------------------------
+	// If extension is '*.scp' then a remote file
+	// have to be downloaded into local 'path' via scp
+	// -------------------------
+	if (path.extname(theFileEntry) === '.scp') {
+		console.log('Download request');	// DBG
+		download(theFileEntry);
+	}
+	else {
+		setFile(theFileEntry, false);
+		readFileIntoEditor(theFileEntry);
+	}
 };
+
+/**
+ * Helper: Execute 'scp' download file command
+ * Called by: onChosenFileToOpen handler
+ * Make call: childProcess.exec()
+ * @param {String} remoteFileDescriptor - Full path of the current '*.scp' file locator
+ */
+function download(remoteFileDescriptor) {
+	// WARN: readFileSync returns a 'buffer' unless an encoding option is specified
+	var remote = JSON.parse(fs.readFileSync(remoteFileDescriptor, {encoding: 'utf8', flag: 'r'}));
+	console.log('Remote file Object:', remote);	// DBG
+	// Build the command line
+	var scpCommand = [
+		'scp',
+		'-P',
+		(remote.port === undefined ? '22' : remote.port),
+		(remote.user + '@' + remote.host + ':' + remote.file),
+		remote.path
+	];
+	console.log('Command:', scpCommand.join(' '));	// DBG
+	// Execution parameters
+	var scpOptions = {
+		encoding: 'utf8',
+		timeout: 2500,
+		maxBuffer: 200 * 1024,
+		killSignal: 'SIGTERM',
+		cwd: null,
+		env: null };
+	// Run local host 'scp' command in a Shell
+	var child = childProcess.exec(scpCommand.join(' '), scpOptions, function (err, stdout, stderr) {
+		console.log('Child PID:', child.pid, '\nstdout:', stdout);
+		if (err) {
+			alert('Download:\n' + err.message);
+			console.log('stderr:', stderr);
+		}
+		else {
+			console.log('File downloaded into:', remote.path);
+			setFile(remote.path, false);		// Set global var 'fileEntry' to local path
+			readFileIntoEditor(remote.path);	// Display file content
+		}
+	});
+// -------- ALTERNATIVE --------
+//	Spawn 'scp' works without Shell but the built-in timeout is very long..!
+// 	var child = childProcess.spawn('scp', scpCommand);
+// 	child.on('close', function (code) {
+// 		console.log('Child process exited with code ' + code);
+// 	});
+// -----------------------------
+}
+
 /**
  * Save file chooser event handlers<br>
  * Called by: save file event handler<br>
@@ -709,9 +806,55 @@ var onChosenFileToOpen = function (theFileEntry) {
  */
 var onChosenFileToSave = function (theFileEntry) {
 	if (!theFileEntry) {return; }	// Cancel
-	setFile(theFileEntry, true);
-	writeEditorToFile(theFileEntry);
+	// -------------------------
+	// If extension is '*.scp' then the current path
+	// have to be uploaded to remote 'file' via scp
+	// -------------------------
+	if (path.extname(theFileEntry) === '.scp') {
+		console.log('Upload request');	// DBG
+		upload(theFileEntry);
+	}
+	else {
+		setFile(theFileEntry, true);
+		writeEditorToFile(theFileEntry);
+	}
 };
+
+/**
+ * Helper: Execute 'scp' upload file command
+ * Called by: onChosenFileToSave handler
+ * Make call: childProcess.exec()
+ * @param {String} remoteFileDescriptor - Full path of the current '*.scp' file locator
+ */
+function upload(remoteFileDescriptor) {
+	var remote = JSON.parse(fs.readFileSync(remoteFileDescriptor, {encoding: 'utf8', flag: 'r'}));
+	console.log('Remote file Object:', remote);	// DBG
+	// Save editor content into local file
+	writeEditorToFile(remote.path);
+	// Build the command line
+	var scpCommand = ['scp',
+		'-P', (remote.port === undefined ? '22' : remote.port),
+		remote.path,
+		(remote.user + '@' + remote.host + ':' + remote.file)
+	];
+	console.log('Command:', scpCommand.join(' '));	// DBG
+	// Execution parameters
+	var scpOptions = {
+		encoding: 'utf8',
+		timeout: 2500,
+		maxBuffer: 200 * 1024,
+		killSignal: 'SIGTERM',
+		cwd: null,
+		env: null };
+	// Run local host 'scp' command
+	var child = childProcess.exec(scpCommand.join(' '), scpOptions, function (err, stdout, stderr) {
+		if (err) {
+			alert('Upload:\n' + err.message);
+			console.log('stderr:', stderr);
+		}
+		console.log('File uploaded from:', remote.path, 'into', remote.file);
+	});
+}
 
 // -----------------------------
 // Command Handlers
@@ -745,6 +888,7 @@ function handleNewButton() {
 /**
  * Open file button event handlers<br>
  * Called by: openButton.addEventListener()<br>
+ * Mae call: onChosenFileToOpen()
  */
 function handleOpenButton() {
 	$('#openFile').trigger('click');
@@ -753,6 +897,7 @@ function handleOpenButton() {
 /**
  * Save file button event handlers<br>
  * Called by: saveButton.addEventListener()<br>
+ * Make call: onChosenFileToSave()
  */
 function handleSaveButton() {
 	if (false) {
@@ -1594,6 +1739,13 @@ win.on('loaded', function () {
 	$('#saveFile').change(function (evt) {
 		onChosenFileToSave($(this).val());
 	});
+
+	/**
+	 * Set open file default path to HOME
+	 * Refer to:
+	 * https://github.com/rogerwang/node-webkit/wiki/File-dialogs
+	 */
+	$('#openFile').attr('nwworkingdir', process.env.HOME);
 
 	/**
 	 * Register file chooser 'open' event
