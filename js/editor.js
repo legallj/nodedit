@@ -13,7 +13,7 @@
 
 /**
  * @fileOverview WebApp developped under node-webkit to edit, preview and execute files<br>
- * Version dated 2014-03-21 designed for Mac OS-X
+ * Version dated 2014-05-01 designed for Mac OS-X
  * @requires fs
  * @requires path
  * @requires child_process
@@ -248,12 +248,20 @@ subMenu.append(new gui.MenuItem({
 	type: 'normal',
 	label: 'Tutorial',
 	click: function () {
-		// Open tutorial page in the default browser window to get audio output
-		childProcess.exec('open ' + process.cwd() + '/views/tuto.html', function (error, stdout, stderr) {
-			if (error) {console.log(stderr.toString()); }
-		});
+		if (process.platform === 'darwin') {
+			// Open tutorial page in the default browser window to get audio output
+			childProcess.exec('open ' + process.cwd() + '/views/tuto.html', function (error, stdout, stderr) {
+				if (error) {console.log(stderr.toString()); }
+			});
+		}
+		else if (process.platform === 'linux') {
+			// Open tutorial page in a browser window to get audio output
+			childProcess.exec('/usr/bin/firefox ' + process.cwd() + '/views/tuto.html', function (error, stdout, stderr) {
+				if (error) {console.log(stderr.toString()); }
+			});
+		}
 		// Open a separate Chromium webkit window
-		// video Ok but no audio output..!
+		// video Ok but no audio output due to mp3 patent..!
 // 		var new_win = gui.Window.open('tuto.html', {
 // 			position: 'center',
 // 			toolbar: true,
@@ -510,6 +518,12 @@ function handleDocumentChange(filePath) {
 		case '.css':
 			mode = 'css';
 			modeName = 'CSS';
+			theme = 'monokai';
+			break;
+		case '.scss':
+			mode = 'css';
+			modeName = 'SCSS';
+			theme = 'monokai';
 			break;
 		case '.md':
 		case '.mkd':
@@ -660,9 +674,34 @@ function readFileIntoEditor(theFileEntry) {
 }
 
 /**
+ * Convert SCSS file to CSS with host command sassc<br>
+ * Available under OS-X only..!<br>
+ * Called by: writeEditorToFile()
+ * @param {String} theFileEntry - Full path of the current scss file<br>
+ */
+ function convertToCss(f) {
+	var cssPath = path.join(path.dirname(f), path.basename(f, '.scss') + '.css');
+	console.log('CSS output in', cssPath);	// DBG
+	// Sassc option '-t' (--style) can only be 'nested' (more readable) or 'compressed'
+	// Default import path option '-I' is set to './'
+	var child = childProcess.exec('/usr/local/bin/sassc -t compressed ' + f + ' ' + cssPath, function (error, stdout, stderr) {
+		//console.log('CSS output in', cssPath);
+		if (error !== null) {
+			// NOTE: In case of error, no css file is produced (?)
+			alert(error.message);
+		}
+// DELETED: Already done by handleSaveCmd()
+// 		else if (new_win) {
+// 			// Success then refresh HTML display with new css style
+// 			new_win.reloadIgnoringCache();
+// 		}
+	});
+}
+
+/**
  * Write editor text content into file and adjust UNIX 'rwx' mode<br>
  * Called by: onChosenFileToSave event handler, handleSaveButton(), handleSaveCmd()<br>
- * Make call: handleDocumentChange()<br>
+ * Make call: handleDocumentChange() convertToCss()<br>
  * @param {String} theFileEntry - Full path of the current file<br>
  * @returns {Object} null or write error object
  */
@@ -682,9 +721,12 @@ function writeEditorToFile(theFileEntry) {
 		fs.chmod(theFileEntry, xxx, function (err) {
 			handleDocumentChange(theFileEntry);
 			console.log('File:', mode, 'Write completed with mode:', xxx);	// DBG
+			if (path.extname(fileEntry) === '.scss') {
+				convertToCss(fileEntry);
+			}
 			return err;
-		});
-	});
+		}); // end fs.chmod()
+	}); // end writeFile()
 }
 
 // -----------------------------
@@ -1799,6 +1841,11 @@ win.on('loaded', function () {
 					// [Ctrl-O]
 					// Open file chooser
 					handleOpenButton();
+					break;
+				case 81:
+					// [Ctrl-Q] Linux case
+					gui.App.quit();
+					//gui.App.closeAllWindows();
 					break;
 				default:
 					$.noop();

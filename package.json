@@ -1,9 +1,8 @@
 {
 	"name": "nodEdit",
-	"version": "0.1.11",
+	"version": "0.2.0",
 	"description": "Minimal IDE dedicated to single page application (SPA) development under NodeJS with WebKit.",
 	"keywords": ["editor", "IDE", "node", "webkit"],
-	"version": "0.1.2",
 	"main": "views/main.html",
 	"no-edit-menu": true,
 	"chromium-args": "--child-clean-exit",
@@ -21,9 +20,15 @@
 		"marked": "*",
 		"mime": "*"
 	},
-	"maintainers":[ {
+	"os" : [ "darwin", "linux" ],
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/legallj/nodedit.git"
+	},
+	"author":[ {
 		"name": "Jean-Yves Le Gall",
 		"email": "legallj@mac.com",
 		"web": "http://legalljnc.dyndns.org"
-	}]
+	}],
+	"homepage": "http://legallj.github.io/"
 }
