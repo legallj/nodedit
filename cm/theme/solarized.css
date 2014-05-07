@@ -28,9 +28,8 @@ http://ethanschoonover.com/solarized/img/solarized-palette.png
 /* Color scheme for code-mirror */
 
 .cm-s-solarized {
-  line-height: 1.4em;
+  line-height: 1.45em;
   font-family: Menlo,Monaco,"Andale Mono","lucida console","Courier New",monospace !important;
-  font-size: 12px;
   color-profile: sRGB;
   rendering-intent: auto;
 }
@@ -62,7 +61,8 @@ http://ethanschoonover.com/solarized/img/solarized-palette.png
 .cm-s-solarized .cm-property { color: #2aa198; }
 .cm-s-solarized .cm-operator {color: #6c71c4;}
 
-.cm-s-solarized .cm-comment { color: #586e75; font-style:italic; }
+/* .cm-s-solarized .cm-comment { color: #586e75; font-style:italic; } */
+.cm-s-solarized .cm-comment { color: #586e75; font-family:monospace; font-size:1.15em}
 
 .cm-s-solarized .cm-string { color: #859900; }
 .cm-s-solarized .cm-string-2 { color: #b58900; }
@@ -89,7 +89,7 @@ http://ethanschoonover.com/solarized/img/solarized-palette.png
   text-decoration: underline;
   text-decoration-style: dotted;
 }
-.cm-s-solarized .cm-strong { color: #800; }
+.cm-s-solarized .cm-strong { color: #000;font-weight:bold; }
 .cm-s-solarized .cm-tab:before {
   content: "➤";   /*visualize tab character*/
   color: #586e75;
@@ -106,26 +106,25 @@ http://ethanschoonover.com/solarized/img/solarized-palette.png
 }
 
 .cm-s-solarized.cm-s-light .CodeMirror-selected {
-  background: white; //#eee8d5;
+  background: #eee8d5;
 }
-.cm-s-solarized.cm-s-light .CodeMirror-selectedtext { color: red; }
 
 /* Editor styling */
 
 
 
-/* Little 45deg shadow on the view-port of the buffer view */
+/* Little shadow on the view-port of the buffer view */
 .cm-s-solarized.CodeMirror {
-  -moz-box-shadow: inset 4px 4px 8px rgba(0,0,0,0.5);
-  -webkit-box-shadow: inset 4px 4px 8px rgba(0,0,0,0.5);
-  box-shadow: inset 4px 4px 8px rgba(0,0,0,0.5);
+  -moz-box-shadow: inset 7px 0 12px -6px #000;
+  -webkit-box-shadow: inset 7px 0 12px -6px #000;
+  box-shadow: inset 7px 0 12px -6px #000;
 }
 
-/* Gutter border and some 45deg shadow from it */
+/* Gutter border and some shadow from it  */
 .cm-s-solarized .CodeMirror-gutters {
   padding: 0 15px 0 10px;
-  box-shadow: 4px 4px 8px rgba(0,0,0,0.5);
-  border-right: 1px solid black;
+  box-shadow: 0 10px 20px black;
+  border-right: 1px solid;
 }
 
 /* Gutter colors and line number styling based of color scheme (dark / light) */

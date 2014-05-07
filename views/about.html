@@ -21,7 +21,7 @@ http://www.google.com/fonts#ChoosePlace:select
 <div id="output">
 <!-- FRONT PAGE -->
 <h1 class='animated rubberBand'>nodEdit &mdash; Minimal IDE</h1>
-<p>2014-04-24</p>
+<p>2014-05-07</p>
 
 <blockquote>Minimal IDE dedicated to single page application (SPA) development under NodeJS with WebKit.
 This simple tool implements the read - execute - print - loop (REPL) paradigme using only HTML5, CSS3 and Javascript to develop/debug Shell and Python scripts, HTML and NodeJS code as well as Markdown or plain text documentation files.</blockquote>
@@ -228,23 +228,43 @@ implements <strong>type-ahead</strong> feature on entering
 	</tr>
 </table>
 
+<h3>Editing remote files</h3>
+<p>Remote file editing relies on <em>descriptor</em> JSON files identified by their <code>*.scp</code> extension.<br>
+When you open such a descriptor, the designated remote "file" is downloaded into local "path" &mdash; for instance
+into <code>/tmp</code> folder&nbsp;&mdash; using the <code>scp</code> command for edition.<br>
+Conversely, saving with <em>Save</em> button
+(not [Cmd/Ctrl-S] keypress) as a <code>*.scp</code> descriptor file will upload the new editor content into
+the designated remote file, whatever this last is the same or a different remote file.</p>
+<p>Descriptors are small text files containing a JSON structures as below:</p>
+<pre><code>{
+	"file": "/home/legallj/test.txt",
+	"user": "legallj",
+	"host": "neptune.bureau.lan",
+	"port": "22",
+	"path": "/tmp/test.txt"
+}
+</code></pre>
+<p>Note that no <em>password</em> management is provided by <strong>nodEdit</strong>.<br>
+It means that an appropriate <em>public_key</em> shall exists in <code>~/.ssh/</code> folder
+of the designated remote host. This constrain was introduced for better network access security.</p>
+
 <h2>Available Video Tutorials</h2>
 <p>Node-webkit embedded Chromium browser does not provide sound support due to mp3 rights...<br>
 Use instead tray-menu <em>Tutorial</em> command to display video in your default WebBrowser and play sound.</p>
 <ul>
 	<li><a href="./tuto.html" target="_self">Open</a> existing or new file</li>
 	<li><a href="./tuto2.html" target="_self">Edit</a> document</li>
-	<li><a href="./tuto3.html" target="_self">Run</a> script or program</li>
+	<li><a href="./tuto3.html" target="_self">Run</a> script or program (to be provided)</li>
 </ul>
 
-<h2>CodeMirror-3.22</h2>
+<h2>CodeMirror-4.1</h2>
 <p>Download from <a href="https://github.com/marijnh/codemirror">GitHub</a> repository.<br>
 The project page is http://codemirror.net<br>
 The API manual is at http://codemirror.net/doc/manual.html</p>
 
 <p>Editor <em>Mode</em> and <em>Theme</em> are selected according to the extension of the loaded file &mdash; as expected, the default mime type is <code>text/plain</code>. Some functions like <strong>jshint</strong> are automatically activated when the current file type is <em>Javascript</em>. Shortcut <code>[Ctrl-SPACE]</code> triggers code completion based on the words found around in the present document (not the language vocabulary).</p>
 
-<p>Editor <code>CodeMirror-2</code> failed to resize correctly then nodEdit was upgraded to <code>CodeMirror-3</code> &rarr; <strong>Ok!</strong> now...</p>
+<p>Editor <code>CodeMirror-3</code> was upgraded to <code>CodeMirror-4</code> on 2014-05-07...</p>
 
 <h2>Useful Web References</h2>
 <ul>
@@ -259,17 +279,18 @@ The API manual is at http://codemirror.net/doc/manual.html</p>
 <!--
     <li><a href="https://www.npmjs.org/package/scp2">npm scp2 - A pure javascript scp program based on ssh2</a></li>
  -->
-    <li><a href="http://codemirror.net/2/doc/manual.html">CodeMirror 3 - User manual and reference guide</a></li>
+    <li><a href="http://codemirror.net/2/doc/manual.html">CodeMirror - User manual and reference guide</a></li>
     <li><a href="http://docs.emmet.io/abbreviations/syntax/">Emmet - Zen Coding HTML abbreviations syntax</a></li>
     <li><a href="http://highlightjs.org/usage/">hljs - How to use highlight.js</a></li>
     <li><a href="http://daneden.github.io/animate.css/">Animate.CSS - Just-add-water CSS animations</a></li>
     <li><a href="https://developers.google.com/fonts/docs/getting_started">Google Fonts - Google Developers</a></li>
+	<li><a href="http://legallj.github.io/">nodEdit Web site</a></li>
 </ul>
 
 </div>
 
 <footer>
-Version: 2014-04-24 &copy; HomeLab
+Version: 2014-05-07 &copy; HomeLab
 </footer>
 
 </body>

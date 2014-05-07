@@ -1,4 +1,11 @@
-(function () {
+(function(mod) {
+  if (typeof exports == "object" && typeof module == "object") // CommonJS
+    mod(require("../../lib/codemirror"), require("../../mode/css/css"));
+  else if (typeof define == "function" && define.amd) // AMD
+    define(["../../lib/codemirror", "../../mode/css/css"], mod);
+  else // Plain browser env
+    mod(CodeMirror);
+})(function(CodeMirror) {
   "use strict";
 
   var pseudoClasses = {link: 1, visited: 1, active: 1, hover: 1, focus: 1,
@@ -24,7 +31,7 @@
           result.push(name);
     }
 
-    var st = token.state.state;
+    var st = inner.state.state;
     if (st == "pseudo" || token.type == "variable-3") {
       add(pseudoClasses);
     } else if (st == "block" || st == "maybeprop") {
@@ -43,4 +50,4 @@
       to: CodeMirror.Pos(cur.line, end)
     };
   });
-})();
+});

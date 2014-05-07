@@ -1159,8 +1159,10 @@ function handleSaveCmd() {
 	dirtyBit = false;
 	$('#save').hide();
 	if (new_win) {
-		// Refresh display with new content
-		new_win.reloadIgnoringCache();
+		// Refresh display with new content after 500ms
+		setTimeout(function () {
+			new_win.reloadIgnoringCache();
+		}, 500);
 		$('#view').hide();
 	}
 }

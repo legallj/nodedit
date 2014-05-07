@@ -1,5 +1,5 @@
 #nodEdit
-v0.2.1 dated 2014-04-05
+v0.2.1 dated 2014-05-07
 
 > Minimal IDE dedicated to single page application (SPA) development under NodeJS with WebKit. This simple tool implements the read - execute - print - loop (REPL) paradigme using only HTML5, CSS3 and Javascript to develop/debug Shell and Python scripts, HTML and NodeJS code as well as Markdown or plain text documentation files.
 
