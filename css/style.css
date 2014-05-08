@@ -314,10 +314,17 @@ caption {
   }
 }
 
+/*
+ * ANIMATION NOT SUPPORTED
+ * BY DEBIAN-7 WITH GNOME3
+ */
+
+ /*
 .slideInRight {
   -webkit-animation-name: slideInRight;
   animation-name: slideInRight;
 }
+*/
 
 /*
  * WEBKIT SCROLL BARS

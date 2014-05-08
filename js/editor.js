@@ -128,7 +128,7 @@ for (var i = 1; i < 12; i++) {
 process.on('uncaughtException', function (err) {
     // handle the error safely
     console.log('Uncaught error', err);
-    client.close();	// Conservative..!
+    //client.close();	// Conservative..!
 });
 
 /**

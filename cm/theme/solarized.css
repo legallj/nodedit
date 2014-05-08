@@ -28,6 +28,7 @@ http://ethanschoonover.com/solarized/img/solarized-palette.png
 /* Color scheme for code-mirror */
 
 .cm-s-solarized {
+  font-size: 12px;
   line-height: 1.45em;
   font-family: Menlo,Monaco,"Andale Mono","lucida console","Courier New",monospace !important;
   color-profile: sRGB;
@@ -106,7 +107,7 @@ http://ethanschoonover.com/solarized/img/solarized-palette.png
 }
 
 .cm-s-solarized.cm-s-light .CodeMirror-selected {
-  background: #eee8d5;
+  background: #fff; /*#eee8d5;*/
 }
 
 /* Editor styling */
