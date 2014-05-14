@@ -300,6 +300,15 @@ subMenu.append(new gui.MenuItem({
 		//gui.App.closeAllWindows();
 	}
 }));
+// TEST: USELESS
+// https://github.com/rogerwang/node-webkit/issues/1507
+// subMenu.append(new gui.MenuItem({
+// 	type: 'normal',
+// 	label: 'History Back',
+// 	click: function () {
+// 		window.history.back();
+// 	}
+// }));
 
 /** @global */
 /** {Reference} to tray icon with label */
@@ -486,7 +495,10 @@ function handleDocumentChange(filePath) {
 		extraKeys = defaultEditCmds;
 		menu.items[5].enabled = false;
 		lint = false;
+		// No tab rulers by default
 		editor.setOption('rulers', null);
+		// Auto-pair braces and quotes by default
+		editor.setOption('autoCloseBrackets', true);
 		// Test file extension (including leading dot)
 		switch (ext) {
 		case '.js':
@@ -540,6 +552,8 @@ function handleDocumentChange(filePath) {
 			// objects, you can do so by passing an empty object as the target.
 			// -------------
 			extraKeys = $.extend({}, defaultEditCmds, markdownEditCmds);
+			// Auto-pair braces and quotes is useless for Markdown text
+			editor.setOption('autoCloseBrackets', false);
 			extItem.submenu = submenuMarkdown;
 			menu.items[5].enabled = true;
 			$('#view').show();
@@ -600,9 +614,11 @@ function handleDocumentChange(filePath) {
 			mode = 'text/plain';
 			modeName = 'Plain text';
 			theme = 'default';
+			// Auto-pair braces and quotes is useless for text entry
+			editor.setOption('autoCloseBrackets', false); // Useless for text entry
 			editor.setSelection({line: 0, ch: 0}, {line: 1, ch: 0});	// Select line to be replaced
 			$('view').hide();
-		} // end switch
+		} // end switch on extension
 	}
 	else {
 		console.log('No file, edit a new document');	// DBG
@@ -1874,6 +1890,7 @@ win.on('loaded', function () {
 
    /**
 	* Create CodeMirror instance<br>
+	* Most options are managed by handleDocumentChange()<br>
 	* @param {Element} DOM CodeMirror editor<br>
 	* @param {Object} options
 	*/
@@ -1927,7 +1944,9 @@ win.on('loaded', function () {
 		autoFill(cm, changeObj);
 	});
 	newFile();
-	onresize();
+	// Window resize handler line 1963
+	// is useless with Codemirror-4
+	//onresize();
 
 	// Front page system information complement
 	// -------------------------
@@ -1950,24 +1969,23 @@ win.on('loaded', function () {
 // Window resize event handler
 // Specified webkit method below crash..!
 // win.on('resize', function (width, height) {...});
+// Useless with Codemirror-4
 // -----------------------------
 
-/**
+/** DISABLED
  * Resize window and adjust editor page<br>
  * Called by: 'resize' even<br>
  * Make call: editor.getScrollerElement()
  */
-window.onresize = function () {
-	var container = document.getElementById('editor');
-	var containerWidth = container.offsetWidth;
-	var containerHeight = container.offsetHeight;
-
-	var scrollerElement = editor.getScrollerElement();
-	scrollerElement.style.width = containerWidth + 'px';
-	scrollerElement.style.height = containerHeight + 'px';
-
-	editor.refresh();
-};
+//window.onresize = function () {
+// 	var container = document.getElementById('editor');
+// 	var containerWidth = container.offsetWidth;
+// 	var containerHeight = container.offsetHeight;
+// 	var scrollerElement = editor.getScrollerElement();
+// 	scrollerElement.style.width = containerWidth + 'px';
+// 	scrollerElement.style.height = containerHeight + 'px';
+//	editor.refresh();
+//};
 
 //
 // ------------ END ------------
