@@ -49,6 +49,34 @@ var mime = require('mime');
 mime.default_type = 'text/plain';
 
 /** @global */
+/** {Module} External code beautifier */
+var beautify = require('js-beautify');
+
+/** @global */
+/** {String} Beautify language 'js', 'css', 'html'*/
+var beautifyMode = null;
+
+/** @global */
+/** {Object} Code beautifier options */
+var beautifyOptions = {
+    'indent_size': 1,
+    'indent_char': '\t',
+    'indent_level': 0,
+    'indent_with_tabs': true,
+    'preserve_newlines': true,
+    'max_preserve_newlines': 10,
+    'jslint_happy': false,
+    'brace_style': 'end-expand',
+    'keep_array_indentation': false,
+    'keep_function_indentation': false,
+    'space_before_conditional': true,
+    'break_chained_methods': false,
+    'eval_code': false,
+    'unescape_strings': true,
+    'wrap_line_length': 0
+};
+
+/** @global */
 /** {Module} Custom plugin: load snippet */
 var snippet = require('snippet');
 
@@ -486,10 +514,13 @@ function handleDocumentChange(filePath) {
 		console.log('filePath/mime:', filePath, mimeType);	// DBG
 		// Hide output page if displayed
 		outPage.hide();
+		// Display file full path in window title bar
+		//document.getElementsByTagName('title')[0].textContent = filePath;
+		document.title = filePath;
 		// Get file name without its leading path (basename)
 		var title = path.basename(filePath);
 		document.getElementById('title').innerHTML = title;
-		document.title = title;
+		//document.title = title;	// Replaced by file full path
 		var ext = path.extname(filePath);
 		var dir = path.dirname(filePath);
 		extraKeys = defaultEditCmds;
@@ -499,6 +530,8 @@ function handleDocumentChange(filePath) {
 		editor.setOption('rulers', null);
 		// Auto-pair braces and quotes by default
 		editor.setOption('autoCloseBrackets', true);
+		// Disable code beautifier
+		beautifyMode = null;
 		// Test file extension (including leading dot)
 		switch (ext) {
 		case '.js':
@@ -510,11 +543,14 @@ function handleDocumentChange(filePath) {
 			menu.items[5].enabled = true;
 			lint = true;
 			editor.setOption('rulers', rulers);
+			beautifyMode = 'js';
 			$('#run').show();
 			break;
 		case '.json':
 			mode = {name: 'javascript', json: true};
 			modeName = 'JavaScript (JSON)';
+			theme = 'vibrant-ink';
+			editor.setOption('rulers', rulers);
 			break;
 		case '.html':
 			mode = 'htmlmixed';
@@ -525,12 +561,18 @@ function handleDocumentChange(filePath) {
 			editor.setOption('autoCloseTags', true);
 			// Define Emmet output profile
 			editor.setOption('profile', 'xhtml');
+			beautifyMode = 'html';
+			extItem.submenu = submenuHTML;
+			menu.items[5].enabled = true;
 			$('#view').show();
 			break;
 		case '.css':
 			mode = 'css';
 			modeName = 'CSS';
 			theme = 'monokai';
+			beautifyMode = 'css';
+			extItem.submenu = submenuCSS;
+			menu.items[5].enabled = true;
 			break;
 		case '.scss':
 			mode = 'css';
@@ -1343,6 +1385,15 @@ function gotoLine() {
 	);
 }
 
+/**
+ * Beautify selected code according to language<br>
+ * defined by 'beautifyMode' among js, html or css
+ */
+function beautifyCode() {
+	if (!editor.somethingSelected()) {return; }
+	var data = editor.getSelection();
+	editor.replaceSelection(beautify[beautifyMode](data, beautifyOptions));
+}
 // -----------------------------
 // Popup Javascript subMenu
 // -----------------------------
@@ -1383,6 +1434,10 @@ submenuJavascript.append(new gui.MenuItem({
 			editor.focus();
 		});
 	}
+}));
+submenuJavascript.append(new gui.MenuItem({
+	label: 'Beautify',
+	click: beautifyCode
 }));
 
 // -----------------------------
@@ -1427,6 +1482,30 @@ submenuMarkdown.append(new gui.MenuItem({
 submenuMarkdown.append(new gui.MenuItem({
 	label: 'Underlined',
 	click: function () {editor.options.extraKeys['Cmd-U'](editor); }
+}));
+
+// -----------------------------
+// Popup HTML subMenu
+// -----------------------------
+
+/** @global */
+/** {Instance} Create HTML dedicated popup sub-menu */
+var submenuHTML = new gui.Menu();
+submenuHTML.append(new gui.MenuItem({
+	label: 'Beautify',
+	click: beautifyCode
+}));
+
+// -----------------------------
+// Popup CSS subMenu
+// -----------------------------
+
+/** @global */
+/** {Instance} Create HTML dedicated popup sub-menu */
+var submenuCSS = new gui.Menu();
+submenuCSS.append(new gui.MenuItem({
+	label: 'Beautify',
+	click: beautifyCode
 }));
 
 // -----------------------------
@@ -1585,12 +1664,18 @@ function editDropFile(e) {
  * @param {Object} changeObj - gives {from, to, text, next} data
  */
 function autoFill(cm, changeObj) {
-	if (mode !== 'javascript' && mode !== 'text/x-c' && mode !== 'text/x-java') {return; }
 	//console.log('Editor change event', changeObj, cm.getTokenAt(cm.getCursor()));	// DBG
+	//Filter triggering conditions to avoid spurious template insertion
+	// 1. Check language
+	if (mode !== 'javascript' && mode !== 'text/x-c' && mode !== 'text/x-java') {return; }
+	// 2. Test if cursor is at EOL
+	var pos = cm.getCursor();
+	if (cm.getLine(pos.line).length !== pos.ch) {return; }
+	// 3. Ignore keyword on delete sequence
+	if (changeObj.origin === '+delete') {return; }
 	// -----------------------------
 	// Auto-fill Javascript keywords
 	// -----------------------------
-	var pos = cm.getCursor();
 	var token = cm.getTokenAt(pos);
 	if (token.type === 'keyword') {
 		//console.log('Token:', token.string);	// DBG
@@ -1705,19 +1790,25 @@ win.on('loaded', function () {
 	/**
 	 * Prevent default window.ondragover action
 	 */
-	window.ondragover = function (e) { e.preventDefault(); };
+	window.ondragover = function (e) {
+		e.preventDefault();
+		return false;
+	};
 
 	/**
 	 * Prevent default window.ondrop action
 	 */
-	window.ondrop = function (e) { e.preventDefault(); };
-	var holder = document.getElementById('holder');
+	window.ondrop = function (e) {
+		e.preventDefault();
+		return false;
+	};
 
 	/**
 	 * while 'ondragover'
 	 * Highlight footer '#holder' area
 	 * and select header button '#open' programmatically
 	 */
+	var holder = document.getElementById('holder');
 	holder.ondragover = function () {
 		this.className = 'hover';
 		$('#open').addClass('jqhover');
@@ -1915,6 +2006,10 @@ win.on('loaded', function () {
 			extraKeys: extraKeys
 		}
 	);
+
+	/**
+	 * Hide 'Save' button on top bar
+	 */
 	$('#save').hide();
 
 	/**
@@ -1950,8 +2045,19 @@ win.on('loaded', function () {
 
 	// Front page system information complement
 	// -------------------------
-	outPage.append('<pre>CodeMirror v' + CodeMirror.version + ' running node-webkit ' + process.version + ' under ' + process.platform + '\nOpen or create a new file...\n</pre>');
+	outPage.append('<pre>CodeMirror v' + CodeMirror.version + ' running node ' + process.versions.node + ' with node-webkit ' + process.versions['node-webkit'] + ' under ' + process.platform + '\nnodEdit application version ' + gui.App.manifest.version + '\n</pre>');
 	outPage.show();
+
+	// Load file from argument
+	// -------------------------
+	if (gui.App.argv.length > 0) {
+		// Launched from command line or 'nodedit' script
+		// with optional file path to open as first argument
+		// https://github.com/rogerwang/node-webkit/wiki/How-to-run-apps
+		var theFileArg = gui.App.argv[0];
+		setFile(theFileArg, true);
+		readFileIntoEditor(theFileArg);
+	}
 
 	// -------------------------
 	// File 'package.json' contains option "show": false.
