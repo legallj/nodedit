@@ -1,6 +1,6 @@
 {
 	"name": "nodEdit",
-	"version": "0.2.0",
+	"version": "0.2.1",
 	"description": "Minimal IDE dedicated to single page application (SPA) development under NodeJS with WebKit.",
 	"keywords": ["editor", "IDE", "node", "webkit"],
 	"main": "views/main.html",
@@ -14,11 +14,13 @@
 		"min_height": 480,
 		"show": false,
 		"title": "nodEdit",
+		"position": "center",
 		"toolbar": false
 		},
 	"dependencies": {
 		"marked": "*",
-		"mime": "*"
+		"mime": "*",
+		"js-beautify": "*"
 	},
 	"os" : [ "darwin", "linux" ],
 	"repository": {
